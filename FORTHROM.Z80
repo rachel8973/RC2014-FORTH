@@ -4470,7 +4470,8 @@ NO_KEY:
 ; 	RET
  
 CHR_WR:					;Character out
-    RST 08h
+        AND 7Fh                         ;To knock off end of word marker
+        RST 08h
 	RET				;
 
 ;==============================================================================
