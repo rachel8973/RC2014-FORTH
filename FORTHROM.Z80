@@ -217,7 +217,7 @@ BUFFERS:	.EQU	0001h		;Pseudo disk buffers per block
 
 ; communication with the host or VDU.
 
-MONSTART:	.EQU	0153h		;Monitor entry address
+;MONSTART:	.EQU	0150h		;Monitor entry address
 
 ;==============================================================================
 ;	IO/M Addresses
@@ -248,6 +248,7 @@ MONSTART:	.EQU	0153h		;Monitor entry address
 ; 
 ; 	XOR	A			;Clear A
 ; 	LD	(KEYBUF),A		;Clear buffered key
+
 	JP	X_COLD
 	
 	.ORG	153h			; 
@@ -2804,7 +2805,7 @@ B0021:
 	.WORD	00A0h
 	.WORD	C_TOGGLE		;XOR (addr) with byte
 	.WORD	C_HERE			;Dictionary pointer onto stack
-	.WORD	C_1			    ;Put 1 on stack
+	.WORD	C_1			;Put 1 on stack
 	.WORD	C_MINUS
 	.WORD	C_LIT			;Puts next 2 bytes on the stack
 	.WORD	0080h
@@ -4322,17 +4323,17 @@ C_NEXT:
 ; 	EI				;Enable interrupt
 ; 	JP	NEXT
 
-W_MON:					;Jump to m/c monitor
-	.BYTE	83h,"MO",'N'+80h
+;W_MON:					;Jump to m/c monitor
+;	.BYTE	83h,"MO",'N'+80h
 ;	.WORD	W_EI
-	.WORD	W_NEXT
-C_MON:
-	.WORD 	2+$
-	JP	MONSTART 
+;C_MON:
+;	.WORD 	2+$
+;	JP	MONSTART 
 
 W_LLOAD:
 	.BYTE	85h,"LLOA",'D'+80h
-	.WORD	W_MON
+;	.WORD	W_MON
+	.WORD	W_NEXT
 C_LLOAD:
 	.WORD	E_COLON			;Interpret following word sequence
 	.WORD	C_BLOCK			;Get block address
@@ -4444,10 +4445,9 @@ CF_UQTERMINAL:				;Test for user break
 ;==============================================================================
 ; Serial I/O routines
 ;==============================================================================
-
 ; Change these to suit your target system .....
 
-CHR_RD:					;8251 Character in
+CHR_RD:					;Character in
 	RST 10h
 	RET
 NO_BUF_KEY:
@@ -4455,10 +4455,10 @@ NO_BUF_KEY:
 
 BREAKKEY:
 ; 	IN A,($80)
-; 	AND $01             ; Check if interupt due to read buffer full
-; 	JR Z,NO_KEY        ; if not, ignore
+; 	AND $01           		;Check if interupt due to read buffer full
+; 	JR Z,NO_KEY        		;if not, ignore
 ; 	IN A,($81)
-; 	CP 27h			;Is it break
+; 	CP 27h				;Is it break
 ; 	JR Z,WAS_BRK
 NO_KEY:
  	XOR	A			;Wasn't break, or no key, so clear
@@ -4467,22 +4467,22 @@ NO_KEY:
 ; 	LD	A,01h			;Was break so set flag
 ; 	RET
  
-CHR_WR:					;8251 Character out
+CHR_WR:					;Character out
     RST 08h
 	RET				;
 
 ;==============================================================================
-			.ORG	0FE00h	;Set up system variable addresses
+		.ORG	0FE00h	;Set up system variable addresses
 ;==============================================================================
-SYSTEM:						;Start of scratch pad area
-			.BLOCK	6		;User bytes
-S0:			.BLOCK	2		;Initial value of the data stack pointer
-R0:			.BLOCK	2		;Initial value of the return stack pointer
+SYSTEM:					;Start of scratch pad area
+		.BLOCK	6		;User bytes
+S0:		.BLOCK	2		;Initial value of the data stack pointer
+R0:		.BLOCK	2		;Initial value of the return stack pointer
 TIB:		.BLOCK	2		;Address of the terminal input buffer
 WIDTH:		.BLOCK	2		;Number of letters saved in names
 WARNING:	.BLOCK	2		;Error message control number
 FENCE:		.BLOCK	2		;Dictionary FORGET protection point
-DP:			.BLOCK	2		;The dictionary pointer
+DP:		.BLOCK	2		;The dictionary pointer
 VOC_LINK:	.BLOCK	2		;Most recently created vocabulary
 BLK:		.BLOCK	2		;Current block number under interpretation
 TOIN:		.BLOCK	2		;Offset in the current input text buffer
@@ -4490,30 +4490,30 @@ OUT:		.BLOCK	2		;Offset in the current output text buffer
 SCR:		.BLOCK	2		;Screen number last referenced by LIST
 OFFSET:		.BLOCK	2		;Block offset for disk drives
 CONTEXT:	.BLOCK	2		;Pointer to the vocabulary within which
-							;dictionary search will first begin
+					;dictionary search will first begin
 CURRENT:	.BLOCK	2		;Pointer to the vocabulary within which
-							;new definitions are to be created
+					;new definitions are to be created
 STATE:		.BLOCK	2		;Contains state of compillation
 BASE:		.BLOCK	2		;Current I/O base address
 DPL:		.BLOCK	2		;Number of digits to the right of the
-							;decimal point on double integer input
+					;decimal point on double integer input
 FLD:		.BLOCK	2		;Field width for formatted number output
 CSP:		.BLOCK	2		;Check stack pointer
 RHASH:		.BLOCK	2		;Location of editor cursor in a text bloxk
 HLD:		.BLOCK	2		;Address of current output
 FLAST:		.BLOCK	6		;FORTH vocabulary data initialised to FORTH
-							;vocabulary
+					;vocabulary
 ELAST:		.BLOCK	6		;Editor vocabulary data initialised to
-							;EDITOR vocabulary
+					;EDITOR vocabulary
 CRFLAG:		.BLOCK	1		;Carriage return flag
-			.BLOCK	1		;User byte
+		.BLOCK	1		;User byte
 PAT:		.BLOCK	3		;I/O port fetch routine (input)
 PST:		.BLOCK	3		;I/O port store routine (output)
 RPP:		.BLOCK	2		;Return stack pointer
 USE:		.BLOCK	2		;Mass storage buffer address to use
 PREV:		.BLOCK	2		;Mass storage buffer address just used
 INTFLAG:	.BLOCK	1		;Interrupt flag
-			.BLOCK	1		;User byte
+		.BLOCK	1		;User byte
 INTVECT:	.BLOCK	2		;Interrupt vector
 UTERMINAL:	.BLOCK	2		;Code field address of word ?TERMINAL
 UKEY:		.BLOCK	2		;Code field address of word KEY
@@ -4537,10 +4537,10 @@ RAF2:		.BLOCK	2		;Register AF'
 RBC2:		.BLOCK	2		;Register BC'
 RDE2:		.BLOCK	2		;Register DE'
 RHL2:		.BLOCK	2		;Register HL'
-			.BLOCK	1		;User byte
+		.BLOCK	1		;User byte
 JPCODE:		.BLOCK	1		;JMP code (C3) for word CALL
 JPVECT:		.BLOCK	2		;JMP vector for word CALL
-			.BLOCK	32		;User bytes	
+		.BLOCK	32		;User bytes	
 
-		    .END
+		.END
 ;==============================================================================
