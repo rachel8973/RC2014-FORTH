@@ -12,6 +12,8 @@ https://archive.org/details/FigFORTHGlossary
 
 I combined it with Grant Searles initialisation and referenced the routines for the TXA and RXA where necessary.
 
+Build with TASM ...
+
 After some messing around and realising that I need to run my terminal at 7-N-1 rather than 8-N-1 it seems to work although
 I haven't tried doing much.
 
