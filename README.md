@@ -14,7 +14,7 @@ I combined it with Grant Searles initialisation and referenced the routines for 
 
 Built with TASM -80 -b -c ...
 
-After some messing around and realising that I need to run my terminal at 7-N-1 rather than 8-N-1 it seems to work although
-I haven't tried doing much.
+After some messing around and realising that I need to run my terminal at add AND 7F to knock off the top bit of the characters
+as it uses this as an end of word marker.
 
 
