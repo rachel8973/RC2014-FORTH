@@ -12,7 +12,11 @@ https://archive.org/details/FigFORTHGlossary
 
 I combined it with Grant Searles initialisation and referenced the routines for the TXA and RXA where necessary.
 
-Built with TASM -80 -b -c ...
+Built with TASM -80 -b -c -dROM ... For ROM binary
+
+or 
+
+Built with TASM -80 -g0 ... For RAM Hex file to run from Monitor
 
 After some messing around and realising that I need to run my terminal at add AND 7F to knock off the top bit of the characters
 as it uses this as an end of word marker.
