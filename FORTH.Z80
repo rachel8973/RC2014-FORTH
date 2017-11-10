@@ -1,3 +1,4 @@
+#IFDEF ROM
 ;==================================================================================
 ; Contents of this file are copyright Grant Searle
 ;
@@ -197,7 +198,8 @@ SIGNON1:       .BYTE     CS
                .BYTE     "Z80 SBC By Grant Searle",CR,LF,0
 SIGNON2:       .BYTE     CR,LF
                .BYTE     "Cold or warm start (C or W)? ",0
-                             
+ 
+#ENDIF         ; ROM
 ;------------------------------------------------------------------------------
 ; FORTH
 ; I found a simple FORTH buried in a ZIP file on the Z80 info site at ...
@@ -216,50 +218,24 @@ DISK_END:	.EQU	0F000h		;Pseudo disk buffer end
 BLOCK_SIZE:	.EQU	0200h		;Pseudo disk block size
 BUFFERS:	.EQU	0001h		;Pseudo disk buffers per block
 
+#IFDEF ROM
+;  No Monitor
+		.ORG	150h		;Start of ROM after BIOS 
+#ELSE
+MONSTART:	.EQU	0153h		;Monitor entry address
+		.ORG	8200h		;Start of RAM allowing for Monitor ROM
+#ENDIF
 
-; communication with the host or VDU.
-
-;MONSTART:	.EQU	0150h		;Monitor entry address
-
-;==============================================================================
-;	IO/M Addresses
-
-; ; This assumes that the uPF IO/M card is fitted.
-; 
-; URTDA		.EQU	60h		;8251 UART Data Port
-; URTCNT		.EQU	61h		;8251 UART Control Port
-; 
-; CTC2		.EQU	66h		;CTC Channel 2, Baud rate gen for UART
-
-;	.ORG	8000h			;Start of RAM
-;	.ORG	8200h			;Start of RAM
-	.ORG	150h			; 
-
-;	Setup 8251 9600 baud 8N1	*
-
-; Change this bit to suit your systems port initialisation.
-
-; 	LD	A,47h			;Counter mode, TC follows, Reset channel
-; 	OUT	(CTC2),A		;CTC2 is baud rate gen for 8251
-; 	LD	A,03h			;Time const for 9600 baud
-; 	OUT	(CTC2),A		;
-; 	LD	HL,RESTAB		;Reset sequence for 8251
-; 	LD	B,TABEND-RESTAB	;Table length
-; 	LD	C,URTCNT		;Point to control port
-; 	OTIR				;OUT and loop until done
-; 
-; 	XOR	A			;Clear A
-; 	LD	(KEYBUF),A		;Clear buffered key
+; Start of FORTH code
 
 	JP	X_COLD
 	
-	.ORG	153h			; 
+#IFDEF ROM
+;  No Monitor
+	.ORG	153h			;  WARM Start Point 
+#ENDIF
 	JP	C_WARM
 
-; RESTAB:
-; 	.BYTE	00h,00h,00h,40h,4Eh,37h
-; TABEND:
-; 
 BACKSPACE:
 	.WORD	0008h			;Backspace chr
 
@@ -372,7 +348,6 @@ X_BRANCH:
 	LD	C,L			;Put it in BC
 	LD	B,H			;
 	JP	NEXT			;Go do it
-
 
 W_0BRANCH:				;Add offset to BC if stack top = 0
 	.BYTE	87h,"0BRANC",'H'+80h	;Conditional branch
@@ -627,13 +602,6 @@ C_KEY:
 	.WORD	2+$			;Vector to code
 	LD	HL,(UKEY)		;Get the vector
 	JP	(HL)			;Jump to it
-
-;	.WORD	E_COLON			;Interpret following word sequence
-;	.WORD	C_UKEY			;Put UKEY addr on stack
-;	.WORD	C_FETCH			;Get CF_KEY
-;	.WORD	C_EXECUTE		;Jump to CF_KEY
-;	.WORD	C_STOP			;Pop BC from return stack (=next)
-
 
 W_TERMINAL:
 	.BYTE	89h,"?TERMINA",'L'+80h
@@ -943,7 +911,6 @@ W_RFETCH:				;Return stack top to data stack
 	.WORD	W_RMOVE
 C_RFETCH:
 	.WORD	X_I			;Return stack top to data stack
-
 
 W_0EQUALS:				;=0
 	.BYTE	82h,'0','='+80h
@@ -4285,53 +4252,6 @@ C_NEXT:
 	.WORD	C_COMMA			;Reserve 2 bytes and save n
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
-; W_IM2:					;Set interrupt mode 2
-; 	.BYTE	83h,"IM",'2'+80h
-; 	.WORD	W_NEXT
-; C_IM2:
-; 	.WORD	2+$			;Vector to code
-; 	IM	2			;Mode 2
-; 	JP	NEXT
-; 
-; W_IM1:					;Set interrupt mode 1
-; 	.BYTE	83h,"IM",'1'+80h
-; 	.WORD	W_IM2
-; C_IM1:
-; 	.WORD	2+$			;Vector to code
-; 	IM	1			;Mode 1
-; 	JP	NEXT
-; 
-; W_IM0:					;Set interrupt mode 0
-; 	.BYTE	83h,"IM",'0'+80h
-; 	.WORD	W_IM1
-; C_IM0:
-; 	.WORD	2+$			;Vector to code
-; 	IM	0			;Mode 0
-; 	JP	NEXT
-; 
-; W_DI:					;Disable interrupt
-; 	.BYTE	82h,'D','I'+80h
-; 	.WORD	W_IM0
-; C_DI:
-; 	.WORD	2+$			;Vector to code
-; 	DI				;Disable interrupt
-; 	JP	NEXT
-; 
-; W_EI:					;Enable interrupt
-; 	.BYTE	82h,'E','I'+80h
-; 	.WORD	W_DI
-; C_EI:
-; 	.WORD	2+$			;Vector to code
-; 	EI				;Enable interrupt
-; 	JP	NEXT
-
-;W_MON:					;Jump to m/c monitor
-;	.BYTE	83h,"MO",'N'+80h
-;	.WORD	W_EI
-;C_MON:
-;	.WORD 	2+$
-;	JP	MONSTART 
-
 W_LLOAD:
 	.BYTE	85h,"LLOA",'D'+80h
 ;	.WORD	W_MON
@@ -4446,8 +4366,8 @@ CF_UQTERMINAL:				;Test for user break
 
 ;==============================================================================
 ; Serial I/O routines
+; Rachel - To use INT32K.ASM
 ;==============================================================================
-; Change these to suit your target system .....
 
 CHR_RD:					;Character in
 	RST 10h
@@ -4475,7 +4395,7 @@ CHR_WR:					;Character out
 	RET				;
 
 ;==============================================================================
-		.ORG	0FE00h	;Set up system variable addresses
+		.ORG	0FE00h	        ;Set up system variable addresses
 ;==============================================================================
 SYSTEM:					;Start of scratch pad area
 		.BLOCK	6		;User bytes

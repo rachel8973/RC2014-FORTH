@@ -12,9 +12,13 @@ https://archive.org/details/FigFORTHGlossary
 
 I combined it with Grant Searles initialisation and referenced the routines for the TXA and RXA where necessary.
 
-Built with TASM -80 -b -c ...
+Built with  ... TASM -80 -b -c -dROM FORTH.Z80 FORTHROM.bin FORTHROM.lst ... For ROM binary
 
-After some messing around and realising that I need to run my terminal at add AND 7F to knock off the top bit of the characters
+or 
+
+Built with ... TASM -80 -g0 FORTH.Z80 FORTHRAM.hex FORTHRAM.lst ... For RAM Hex file to run from Monitor
+
+After some messing around and realising that I need to AND 7F to knock off the top bit of the characters
 as it uses this as an end of word marker.
 
 
