@@ -1,12 +1,26 @@
+;------------------------------------------------------------------------------
+; FORTH - V0
+;------------------------------------------------------------------------------
+;
+; This is not my source. I did not write this I only made it work on the
+; RC2014 so I would have something the mess around with.
+;
+; I found a simple FORTH buried in a ZIP file on the Z80 info site at ...
+;      http://www.z80.info/zip/z80asm.zip
+;
+; V0 - Included the source from Grant Searles simple 7 chip Z80 computer
+;      from here http://searle.hostei.com/grant/
+;      Modified the CHR_RD and CHR_WR to use the routines from INT32K.ROM
+;      Added a def so I can build as a ROM or RAM
+;      A few renames so I could build it with TASM.
+;
+;------------------------------------------------------------------------------
+
 #IFDEF ROM
 #INCLUDE        "INT32K.ASM"
 #ENDIF         ; ROM
-;------------------------------------------------------------------------------
-; FORTH
-; I found a simple FORTH buried in a ZIP file on the Z80 info site at ...
-; http://www.z80.info/zip/z80asm.zip
-;------------------------------------------------------------------------------
 
+;------------------------------------------------------------------------------
 ; This is an implementation of FORTH for the Z80 that should be easily portable
 ; to other Z80 systems. It assumes RAM from 9000h to 0FFFFh and a UART for
 ; communication with the host or VDU.
@@ -21,7 +35,7 @@ BUFFERS:	.EQU	0001h		;Pseudo disk buffers per block
 
 #IFDEF ROM
 ;  No Monitor
-		.ORG	150h		;Start of ROM after BIOS 
+		.ORG	150h		;Start of ROM after BIOS
 #ELSE
 MONSTART:	.EQU	0153h		;Monitor entry address
 		.ORG	8200h		;Start of RAM allowing for Monitor ROM
@@ -30,10 +44,10 @@ MONSTART:	.EQU	0153h		;Monitor entry address
 ; Start of FORTH code
 
 	JP	X_COLD
-	
+
 #IFDEF ROM
 ;  No Monitor
-	.ORG	153h			;  WARM Start Point 
+	.ORG	153h			;  WARM Start Point
 #ENDIF
 	JP	C_WARM
 
@@ -467,7 +481,7 @@ C_USTAR:
 	LD	H,A			; clear H
 	LD	A,C			; high byte to multiply by
 	LD	C,H			; clear B
-	CALL	HALF_TIMES		; HL = A * DE 
+	CALL	HALF_TIMES		; HL = A * DE
 	POP	DE			; get last partial result
 	LD	B,C			; add partial results
 	LD	C,D			; add partial results
@@ -498,18 +512,18 @@ W_UMOD:					;Unsigned divide & MOD
 C_UMOD:
 	.WORD	2+$			;Vector to code
 	LD	HL,0004
-	ADD	HL,SP 
-	LD	E,(HL) 
-	LD	(HL),C 
-	INC	HL 
-	LD	D,(HL) 
-	LD	(HL),B 
-	POP	BC 
-	POP	HL 
-	LD	A,L 
-	SUB	C 
-	LD	A,H 
-	SBC	A,B 
+	ADD	HL,SP
+	LD	E,(HL)
+	LD	(HL),C
+	INC	HL
+	LD	D,(HL)
+	LD	(HL),B
+	POP	BC
+	POP	HL
+	LD	A,L
+	SUB	C
+	LD	A,H
+	SBC	A,B
 	JR	C,J22.BYTE
 	LD	HL,0FFFFh
 	LD	DE,0FFFFh
@@ -517,44 +531,44 @@ C_UMOD:
 J22.BYTE:
 	LD	A,10h
 J22DD:
-	ADD	HL,HL 
-	RLA 
-	EX	DE,HL 
-	ADD	HL,HL 
+	ADD	HL,HL
+	RLA
+	EX	DE,HL
+	ADD	HL,HL
 	JR	NC,J22E5
-	INC	DE 
-	AND	A 
+	INC	DE
+	AND	A
 J22E5:
-	EX	DE,HL 
-	RRA 
-	PUSH	AF 
+	EX	DE,HL
+	RRA
+	PUSH	AF
 	JR	NC,J22F2
-	LD	A,L 
-	SUB	C 
-	LD	L,A 
-	LD	A,H 
-	SBC	A,B 
-	LD	H,A 
+	LD	A,L
+	SUB	C
+	LD	L,A
+	LD	A,H
+	SBC	A,B
+	LD	H,A
 	JR	J22FC
 J22F2:
-	LD	A,L 
-	SUB	C 
-	LD	L,A 
-	LD	A,H 
-	SBC	A,B 
-	LD	H,A 
+	LD	A,L
+	SUB	C
+	LD	L,A
+	LD	A,H
+	SBC	A,B
+	LD	H,A
 	JR	NC,J22FC
-	ADD	HL,BC 
-	DEC	DE 
+	ADD	HL,BC
+	DEC	DE
 J22FC:
-	INC	DE 
-	POP	AF 
-	DEC	A 
+	INC	DE
+	POP	AF
+	DEC	A
 	JR	NZ,J22DD
 J2301:
-	POP	BC 
-	PUSH	HL 
-	PUSH	DE 
+	POP	BC
+	PUSH	HL
+	PUSH	DE
 	JP	NEXT
 
 W_AND:					;AND
@@ -698,7 +712,7 @@ W_RMOVE:				;Move word from return to data stack
 	.WORD	W_MOVER
 C_RMOVE:
 	.WORD	2+$			;Vector to code
-	LD	HL,(RPP)		;Get return stack pointer	
+	LD	HL,(RPP)		;Get return stack pointer
 	LD	E,(HL)			;Pop word off return stack
 	INC	HL			;
 	LD	D,(HL)			;
@@ -1020,8 +1034,8 @@ E_COLON:
 	LD	(HL),C			;
 	LD	(RPP),HL		;Save new pointer
 	INC	DE
-	LD	C,E 
-	LD	B,D 
+	LD	C,E
+	LD	B,D
 	JP	NEXT
 
 W_SEMICOLON:				;Terminate compilation
@@ -1066,8 +1080,8 @@ C_VARIABLE:
 	.WORD	C_CCODE			;Execute following machine code
 
 X_VARIABLE:
-	INC	DE 
-	PUSH	DE 
+	INC	DE
+	PUSH	DE
 	JP	NEXT
 
 W_USER:
@@ -1081,11 +1095,11 @@ C_USER:
 X_USER:
 	INC	DE			;Adjust to next word
 	EX	DE,HL
-	LD	E,(HL) 
-	INC	HL 
-	LD	D,(HL) 
-	LD	HL,(DEF_SYSADDR) 
-	ADD	HL,DE 
+	LD	E,(HL)
+	INC	HL
+	LD	D,(HL)
+	LD	HL,(DEF_SYSADDR)
+	ADD	HL,DE
 	JP	NEXTS1			;Save & NEXT
 
 W_ZERO:					;Put zero on stack
@@ -1668,20 +1682,20 @@ W_LESSTHAN:
 	.WORD	W_.EQUALS
 C_LESSTHAN:
 	.WORD	2+$			;Vector to code
-	POP	DE 
-	POP	HL 
-	LD	A,D 
-	XOR	H 
-	JP	M,J298C 
-	CALL	MINUS16 
+	POP	DE
+	POP	HL
+	LD	A,D
+	XOR	H
+	JP	M,J298C
+	CALL	MINUS16
 J298C:
-	INC	H 
-	DEC	H 
-	JP	M,J2997 
-	LD	HL,0000 
+	INC	H
+	DEC	H
+	JP	M,J2997
+	LD	HL,0000
 	JP	NEXTS1			;Save & NEXT
 J2997:
-	LD	HL,0001 
+	LD	HL,0001
 	JP	NEXTS1			;Save & NEXT
 
 W_ULESS:				;IF stack-1 < stack_top leave true flag
@@ -1755,7 +1769,7 @@ C_QUERYDUP:
 	.WORD	B0002-$			;0004h
 	.WORD	C_DUP			;Duplicate top value on stack
 B0002:
-	.WORD	C_STOP			;Pop BC from return stack (=next) 
+	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_TRAVERSE:
 	.BYTE	88h,"TRAVERS",'E'+80h
@@ -1941,7 +1955,7 @@ C_LEFTBRKT:
 	.WORD	E_COLON			;Interpret following word sequence
 	.WORD	C_ZERO			;Put zero on stack
 	.WORD	C_STATE			;Push STATE addr
-	.WORD	C_STORE			;Store word at addr 
+	.WORD	C_STORE			;Store word at addr
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_RIGHTBRKT:				;Set STATE to compile
@@ -2038,7 +2052,7 @@ X_DOES:
 	LD	(HL),B			;
 	DEC	HL			;
 	LD	(HL),C			;
-	LD	(RPP),HL	
+	LD	(RPP),HL
 	INC	DE
 	EX	DE,HL
 	LD	C,(HL)
@@ -2347,7 +2361,7 @@ W_WORD:
 C_WORD:
 	.WORD	E_COLON			;Interpret following word sequence
 	.WORD	C_BLK
-	.WORD	C_FETCH			;Get word from addr on stack 
+	.WORD	C_FETCH			;Get word from addr on stack
 	.WORD	C_0BRANCH		;Add offset to BC if stack top = 0
 	.WORD	B0016-$			;000Ch
 	.WORD	C_BLK
@@ -2499,7 +2513,7 @@ W_CABORT:
 	.BYTE	87h,"<ABORT",'>'+80h
 	.WORD	W_MFIND
 C_CABORT:
-	.WORD	E_COLON			;Interpret following word sequence	
+	.WORD	E_COLON			;Interpret following word sequence
 	.WORD	C_ABORT
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
@@ -2509,7 +2523,7 @@ W_ERROR:
 C_ERROR:
 	.WORD	E_COLON			;Interpret following word sequence
 	.WORD	C_WARNING		;Put WARNING addr on stack
-	.WORD	C_FETCH			;Get word from addr on stack 
+	.WORD	C_FETCH			;Get word from addr on stack
 	.WORD	C_0LESS			;Less than 0 leaves true
 	.WORD	C_0BRANCH		;Add offset to BC if stack top = 0
 	.WORD	B001F-$			;0004h
@@ -2639,9 +2653,9 @@ W_QSTACK:
 	.WORD	W_DLITERAL
 C_QSTACK:
 	.WORD	E_COLON			;Interpret following word sequence
-	.WORD	C_SPFETCH		;Stack pointer onto stack 
+	.WORD	C_SPFETCH		;Stack pointer onto stack
 	.WORD	C_S0			;Push S0 (initial data stack pointer)
-	.WORD	C_FETCH			;Get word from addr on stack 
+	.WORD	C_FETCH			;Get word from addr on stack
 	.WORD	C_SWAP			;Swap top 2 values on stack
 	.WORD	C_ULESS			;IF stack-1 < stack_top leave true flag
 	.WORD	C_1			;Put 1 on stack
@@ -2961,7 +2975,7 @@ W_MAX:
 C_MAX:
 	.WORD	E_COLON			;Interpret following word sequence
 	.WORD	C_2DUP			;Dup top 2 values on stack
-	.WORD	C_LESSTHAN 
+	.WORD	C_LESSTHAN
 	.WORD	C_0BRANCH		;Add offset to BC if stack top = 0
 	.WORD	B0030-$			;0004h
 	.WORD	C_SWAP			;Swap top 2 values on stack
@@ -3034,7 +3048,7 @@ C_DIV:
 	.WORD	E_COLON			;Interpret following word sequence
 	.WORD	C_DIVMOD
 	.WORD	C_SWAP			;Swap top 2 values on stack
-	.WORD	C_DROP			;Drop top value from stack 
+	.WORD	C_DROP			;Drop top value from stack
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_MOD:
@@ -3527,7 +3541,7 @@ W_ELSE:
 	.BYTE	0C4h,"ELS",'E'+80h
 	.WORD	W_IF
 C_ELSE:
-	.WORD	E_COLON			;Interpret following word sequence 
+	.WORD	E_COLON			;Interpret following word sequence
 	.WORD	C_2
 	.WORD	C_QPAIRS
 	.WORD	C_COMPILE		;Compile next word into dictionary
@@ -3746,15 +3760,15 @@ W_LIST:
 	.BYTE	84h,"LIS",'T'+80h
 	.WORD	W_VLIST
 C_LIST:
-	.WORD	E_COLON			;Interpret following word sequence 
-	.WORD	C_BASE			;Put BASE addr on stack 
-	.WORD	C_FETCH			;Put current base on stack 
-	.WORD	C_SWAP			;Get number of list screen to top 
-	.WORD	C_DECIMAL		;Sets decimal mode 
+	.WORD	E_COLON			;Interpret following word sequence
+	.WORD	C_BASE			;Put BASE addr on stack
+	.WORD	C_FETCH			;Put current base on stack
+	.WORD	C_SWAP			;Get number of list screen to top
+	.WORD	C_DECIMAL		;Sets decimal mode
 	.WORD	C_CR			;Output [CR][LF]
-	.WORD	C_DUP			;Duplicate top value on stack 
+	.WORD	C_DUP			;Duplicate top value on stack
 	.WORD	C_SCR			;Set most recently listed
-	.WORD	C_STORE			;Store word at addr 
+	.WORD	C_STORE			;Store word at addr
 	.WORD	C_CQUOTE		;Output following string
 	.BYTE	S_END3-S_START3
 S_START3:
@@ -3766,15 +3780,15 @@ S_END3:
 	.WORD	C_ZERO			;From 0 to 15
 	.WORD	C_LDO			;Put start & end loop values on RPP
 DO_LINE:
-	.WORD	C_CR			;Output [CR][LF] 
+	.WORD	C_CR			;Output [CR][LF]
 	.WORD	C_I		    	;Line number onto data stack
-	.WORD	C_LIT			;Puts next 2 bytes on the stack 
+	.WORD	C_LIT			;Puts next 2 bytes on the stack
 	.WORD	0003h			;Fromat right justified 3 characters
 	.WORD	C_DOTR			;Output formatted
-	.WORD	C_SPACE			;Output space 
+	.WORD	C_SPACE			;Output space
 	.WORD	C_I		     	;Line number onto data stack
 	.WORD	C_SCR			;Get screen number
-	.WORD	C_FETCH			;Get word from addr on stack 
+	.WORD	C_FETCH			;Get word from addr on stack
 	.WORD	C_DOTLINE		;Output line from screen
 	.WORD	C_TERMINAL		;Check for break key
 	.WORD	C_0BRANCH		;Jump if no break key
@@ -3784,7 +3798,7 @@ NO_BRK:
 	.WORD	C_LLOOP			;Increment loop & branch if not done
 	.WORD	DO_LINE-$		;
 	.WORD	C_CR			;Output [CR][LF]
-	.WORD	C_BASE			;Put BASE addr on stack 
+	.WORD	C_BASE			;Put BASE addr on stack
 	.WORD	C_STORE			;Restore original base
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
@@ -3832,7 +3846,7 @@ X_INT:
 	.WORD	2+$			;Vector to code
 	LD	HL,INTFLAG
 	RES	6,(HL)
-	EI 
+	EI
 	JP	X_STOP
 
 W_INTFLAG:
@@ -3964,7 +3978,7 @@ C_DLESSTHAN:
 	.WORD	C_0BRANCH		;Add offset to BC if stack top = 0
 	.WORD	B0040-$			;000Ah
 	.WORD	C_2DROP			;Drop top two values from stack
-	.WORD	C_ULESS			;IF stack-1 < stack_top leave true flag	
+	.WORD	C_ULESS			;IF stack-1 < stack_top leave true flag
 	.WORD	C_BRANCH		;Add following offset to BC
 	.WORD	B0041-$			;0008h
 B0040:
@@ -3995,7 +4009,7 @@ C_DOTS
 	.WORD	C_SPFETCH		;Stack pointer onto stack
 	.WORD	C_2MINUS		;2 minus
 	.WORD	C_S0			;Push S0 (initial data stack pointer)
-	.WORD	C_FETCH			;Get word from addr on stack	
+	.WORD	C_FETCH			;Get word from addr on stack
 	.WORD	C_2MINUS		;2 minus
 	.WORD	C_LDO			;Put start & end loop values on RPP
 B0043:
@@ -4100,7 +4114,7 @@ LL_CHAR:
 	.WORD	C_DROP			;Drop EOF character
 	.WORD	C_DROP			;Drop next address
 	.WORD	C_STOP			;Pop BC from return stack (=next)
-	
+
 W_TASK:
 	.BYTE	84h,"TAS",'K'+80h
 	.WORD	W_LLOAD
@@ -4189,7 +4203,7 @@ NO_KEY:
 ;WAS_BRK:
 ; 	LD	A,01h			;Was break so set flag
 ; 	RET
- 
+
 CHR_WR:					;Character out
         AND 7Fh                         ;To knock off end of word marker
         RST 08h
@@ -4264,7 +4278,7 @@ RHL2:		.BLOCK	2		;Register HL'
 		.BLOCK	1		;User byte
 JPCODE:		.BLOCK	1		;JMP code (C3) for word CALL
 JPVECT:		.BLOCK	2		;JMP vector for word CALL
-		.BLOCK	32		;User bytes	
+		.BLOCK	32		;User bytes
 
 		.END
 ;==============================================================================
