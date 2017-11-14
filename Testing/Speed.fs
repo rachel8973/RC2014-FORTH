@@ -6,6 +6,7 @@
 ( 14-Nov-2017                                )
 
 COLD
+VOCABULARY RACHEL
 
 40 CONSTANT MINTIME
 70 CONSTANT MAXTIME
