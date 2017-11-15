@@ -24,7 +24,8 @@ COLD
 
 ( The stack is initialised with 3 numbers )
 ( representing the thickness of the paper )
-( n1 n2 n3 n4 -- print table of results )
+( along with the numebr of times to fold  )
+( n1 n2 n3 n4 -- print table of results   )
 : RUN 0 DO CR I 1+ .  FOLDPAPER LOOP ;
 
 
