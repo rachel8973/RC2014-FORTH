@@ -3355,7 +3355,7 @@ C_NEXTSCREEN:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_TICK:
-	.BYTE	81h,2Ch+80h
+	.BYTE	81h,27h+80h
 	.WORD	W_NEXTSCREEN
 C_TICK:
 	.WORD	E_COLON			;Interpret following word sequence
