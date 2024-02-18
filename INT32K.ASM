@@ -35,36 +35,37 @@ CR              .EQU     0DH
 LF              .EQU     0AH
 CS              .EQU     0CH             ; Clear screen
 
-                .ORG $0000
+.section .bios
+.ORG $0000
 ;------------------------------------------------------------------------------
 ; Reset
 
-RST00           DI                       ;Disable interrupts
+RST00:          DI                       ;Disable interrupts
                 JP       INIT            ;Initialize Hardware and go
 
 ;------------------------------------------------------------------------------
 ; TX a character over RS232 
 
                 .ORG     0008H
-RST08            JP      TXA
+RST08:           JP      TXA
 
 ;------------------------------------------------------------------------------
 ; RX a character over RS232 Channel A [Console], hold here until char ready.
 
                 .ORG 0010H
-RST10            JP      RXA
+RST10:           JP      RXA
 
 ;------------------------------------------------------------------------------
 ; Check serial status
 
                 .ORG 0018H
-RST18            JP      CKINCHAR
+RST18:           JP      CKINCHAR
 
 ;------------------------------------------------------------------------------
 ; RST 38 - INTERRUPT VECTOR [ for IM 1 ]
 
                 .ORG     0038H
-RST38            JR      serialInt       
+RST38:           JR      serialInt       
 
 ;------------------------------------------------------------------------------
 serialInt:      PUSH     AF
@@ -140,7 +141,7 @@ conout1:        IN       A,($80)         ; Status byte
                 RET
 
 ;------------------------------------------------------------------------------
-CKINCHAR        LD       A,(serBufUsed)
+CKINCHAR:       LD       A,(serBufUsed)
                 CP       $0
                 RET
 
@@ -193,8 +194,8 @@ CHECKWARM:
                LD        A,$0A
                RST       08H
                JP        $0153           ; Start BASIC WARM
-SIGNON1:       .BYTE     CS
-               .BYTE     "Z80 SBC By Grant Searle",CR,LF,0
-SIGNON2:       .BYTE     CR,LF
-               .BYTE     "Cold or warm start (C or W)? ",0
+SIGNON1:       DEFB      CS
+               DEFM      "Z80 SBC By Grant Searle",CR,LF,0
+SIGNON2:       DEFB      CR,LF
+               DEFM      "Cold or warm start (C or W)? ",0
  

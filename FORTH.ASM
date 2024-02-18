@@ -16,9 +16,9 @@
 ;
 ;------------------------------------------------------------------------------
 
-#IFDEF ROM
-#INCLUDE        "INT32K.ASM"
-#ENDIF         ; ROM
+;#IFDEF ROM
+;#INCLUDE        "INT32K.ASM"
+;#ENDIF         ; ROM
 
 ;------------------------------------------------------------------------------
 ; This is an implementation of FORTH for the Z80 that should be easily portable
@@ -33,22 +33,27 @@ DISK_END:	.EQU	0F000h		;Pseudo disk buffer end
 BLOCK_SIZE:	.EQU	0200h		;Pseudo disk block size
 BUFFERS:	.EQU	0001h		;Pseudo disk buffers per block
 
-#IFDEF ROM
+MAX_DISK_BLOCKS = (DISK_END-DISK_START)/BLOCK_SIZE
+
+;#IFDEF ROM
 ;  No Monitor
-		.ORG	150h		;Start of ROM after BIOS
-#ELSE
-MONSTART:	.EQU	0153h		;Monitor entry address
-		.ORG	8200h		;Start of RAM allowing for Monitor ROM
-#ENDIF
+;		.ORG	150h		;Start of ROM after BIOS
+;#ELSE
+;MONSTART:	.EQU	0153h		;Monitor entry address
+;		.ORG	8200h		;Start of RAM allowing for Monitor ROM
+;#ENDIF
 
 ; Start of FORTH code
 
+.section .cold
+
 	JP	X_COLD
 
-#IFDEF ROM
+;#IFDEF ROM
 ;  No Monitor
-	.ORG	153h			;  WARM Start Point
-#ENDIF
+;	.ORG	153h			;  WARM Start Point
+;#ENDIF
+.section .warm
 	JP	C_WARM
 
 BACKSPACE:
@@ -125,7 +130,9 @@ NEXTADDR:
 	JP	(HL) 			;Jump to it
 
 W_LIT:					;Puts next 2 bytes on the stack
-	.BYTE	83h,"LI",'T'+80h
+	.BYTE	83h
+	.ascii  "LI"
+	.byte   'T'+80h
 	.WORD	0000h			;First word in vocabulary
 C_LIT:
 	.WORD	2+$			;Vector to code
@@ -139,7 +146,9 @@ C_LIT:
 
 
 W_EXECUTE:				;Jump to address on stack
-	.BYTE	87h,"EXECUT",'E'+80h
+	.BYTE	87h
+	.ascii  "EXECUT"
+	.byte   'E'+80h
 	.WORD	W_LIT
 C_EXECUTE:
 	.WORD	2+$			;Vector to code
@@ -148,7 +157,9 @@ C_EXECUTE:
 
 
 W_BRANCH:				;Add following offset to BC
-	.BYTE	86h,"BRANC",'H'+80h
+	.BYTE	86h
+	.ascii  "BRANC"
+	.byte   'H'+80h
 	.WORD	W_EXECUTE
 C_BRANCH:
 	.WORD	2+$			;Vector to code
@@ -165,7 +176,9 @@ X_BRANCH:
 	JP	NEXT			;Go do it
 
 W_0BRANCH:				;Add offset to BC if stack top = 0
-	.BYTE	87h,"0BRANC",'H'+80h	;Conditional branch
+	.BYTE	87h
+	.ascii  "0BRANC"
+	.byte	'H'+80h	;Conditional branch
 	.WORD	W_BRANCH
 C_0BRANCH:
 	.WORD	2+$			;Vector to code
@@ -178,7 +191,9 @@ C_0BRANCH:
 	JP	NEXT			;Continue execution
 
 W_LLOOP:				;Increment loop & branch if not done
-	.BYTE	86h,"<LOOP",'>'+80h
+	.BYTE	86h
+	.ascii  "<LOOP"
+	.byte	'>'+80h
 	.WORD	W_0BRANCH
 C_LLOOP:
 	.WORD	2+$			;Vector to code
@@ -220,7 +235,9 @@ TEST_LIMIT:
 	JP	NEXT
 
 W_PLOOP:				;Loop + stack & branch if not done
-	.BYTE	87h,"<+LOOP",'>'+80h
+	.BYTE	87h
+	.ascii  "<+LOOP"
+	.byte	'>'+80h
 	.WORD	W_LLOOP
 C_PLOOP:
 	.WORD	2+$			;Vector to code
@@ -228,7 +245,9 @@ C_PLOOP:
 	JR	C_ILOOP			;Go do loop increment
 
 W_LDO:					;Put start & end loop values on RPP
-	.BYTE	84h,"<DO",'>'+80h
+	.BYTE	84h
+	.ascii  "<DO"
+	.byte	'>'+80h
 	.WORD	 W_PLOOP
 C_LDO:
 	.WORD	 2+$
@@ -264,7 +283,9 @@ X_I2:
 	JP	NEXT
 
 W_DIGIT:				;Convert digit n2 using base n1
-	.BYTE	85h,"DIGI",'T'+80h
+	.BYTE	85h
+	.ascii  "DIGI"
+	.byte	'T'+80h
 	.WORD	 W_I
 C_DIGIT:
 	.WORD	2+$
@@ -289,7 +310,9 @@ NDIGIT:
 	JP	NEXTS1			;Save & NEXT
 
 W_FIND:					;Find word & return vector,byte & flag
-	.BYTE	86h,"<FIND",'>'+80h
+	.BYTE	86h
+	.ascii  "<FIND"
+	.byte	'>'+80h
 	.WORD	W_DIGIT
 C_FIND:
 	.WORD	2+$			;Vector to code
@@ -342,7 +365,9 @@ END_CHR:
 	JP	NEXTS1			;Save & NEXT
 
 W_ENCLOSE:
-	.BYTE	87h,"ENCLOS",'E'+80h
+	.BYTE	87h
+	.ascii  "ENCLOS"
+	.byte	'E'+80h
 	.WORD	W_FIND
 C_ENCLOSE:
 	.WORD	2+$			;Vector to code
@@ -398,7 +423,9 @@ J2218:
 	JP	NEXT			; done
 
 W_EMIT:					;Output CHR from stack
-	.BYTE	84h,"EMI",'T'+80h
+	.BYTE	84h
+	.ascii  "EMI"
+	.byte	'T'+80h
 	.WORD	W_ENCLOSE
 C_EMIT:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -411,7 +438,9 @@ C_EMIT:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_KEY:					;Wait for key, value on stack
-	.BYTE	83h,"KE",'Y'+80h
+	.BYTE	83h
+	.ascii  "KE"
+	.byte	'Y'+80h
 	.WORD	W_EMIT
 C_KEY:
 	.WORD	2+$			;Vector to code
@@ -419,7 +448,9 @@ C_KEY:
 	JP	(HL)			;Jump to it
 
 W_TERMINAL:
-	.BYTE	89h,"?TERMINA",'L'+80h
+	.BYTE	89h
+	.ascii  "?TERMINA"
+	.byte	'L'+80h
 	.WORD	W_KEY
 C_TERMINAL:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -439,7 +470,9 @@ C_CR:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_CLS:					    ;Clear screen
-	.BYTE	83h,"CL",'S'+80h
+	.BYTE	83h
+	.ascii  "CL"
+	.byte	'S'+80h
 	.WORD	W_CR
 C_CLS:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -449,7 +482,9 @@ C_CLS:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_CMOVE:				;Move block
-	.BYTE	85h,"CMOV",'E'+80h
+	.BYTE	85h
+	.ascii  "CMOV"
+	.byte	'E'+80h
 	.WORD	W_CLS
 C_CMOVE:
 	.WORD	2+$			;Vector to code
@@ -507,7 +542,9 @@ NO_MUL:
 	RET				;
 
 W_UMOD:					;Unsigned divide & MOD
-	.BYTE	85h,"U/MO",'D'+80h
+	.BYTE	85h
+	.ascii  "U/MO"
+	.byte	'D'+80h
 	.WORD	W_USTAR
 C_UMOD:
 	.WORD	2+$			;Vector to code
@@ -572,7 +609,9 @@ J2301:
 	JP	NEXT
 
 W_AND:					;AND
-	.BYTE	83h,"AN",'D'+80h
+	.BYTE	83h
+	.ascii  "AN"
+	.byte	'D'+80h
 	.WORD	W_UMOD
 C_AND:
 	.WORD	2+$			;Vector to code
@@ -602,7 +641,9 @@ C_OR:
 	JP	NEXTS1			;Save & next
 
 W_XOR:					;XOR
-	.BYTE	83h,"XO",'R'+80h
+	.BYTE	83h
+	.ascii  "XO"
+	.byte	'R'+80h
 	.WORD	W_OR
 C_XOR:
 	.WORD	2+$			;Vector to code
@@ -617,7 +658,9 @@ C_XOR:
 	JP	NEXTS1			;Save & NEXT
 
 W_SPFETCH:				;Stack pointer onto stack
-	.BYTE	83h,"SP",'@'+80h
+	.BYTE	83h
+	.ASCII  "SP"
+	.BYTE   '@'+80h
 	.WORD	W_XOR
 C_SPFETCH:
 	.WORD	2+$			;Vector to code
@@ -626,7 +669,9 @@ C_SPFETCH:
 	JP	NEXTS1			;Save & NEXT
 
 W_SPSTORE:				;Set initial stack pointer value
-	.BYTE	83h,"SP",'!'+80h
+	.BYTE	83h
+	.ASCII  "SP"
+	.BYTE   '!'+80h
 	.WORD	W_SPFETCH
 C_SPSTORE:
 	.WORD	2+$			;Vector to code
@@ -641,7 +686,9 @@ C_SPSTORE:
 	JP	NEXT
 
 W_RPFETCH:				;Get return stack pointer
-	.BYTE	83h,"RP",'@'+80h
+	.BYTE	83h
+	.ascii  "RP"
+	.byte	'@'+80h
 	.WORD	W_SPSTORE
 C_RPFETCH:
 	.WORD	2+$			;Vector to code
@@ -649,7 +696,9 @@ C_RPFETCH:
 	JP	NEXTS1			;Save & NEXT
 
 W_RPSTORE:				;Set initial return stack pointer
-	.BYTE	83h,"RP",'!'+80h
+	.BYTE	83h
+	.ascii  "RP"
+	.byte	'!'+80h
 	.WORD	W_RPFETCH
 C_RPSTORE:
 	.WORD	2+$			;Vector to code
@@ -678,7 +727,9 @@ X_STOP:
 	JP	NEXT
 
 W_LEAVE:				;Quit loop by making index = limit
-	.BYTE	85h,"LEAV",'E'+80h
+	.BYTE	85h
+	.ascii  "LEAV"
+	.byte	'E'+80h
 	.WORD	W_STOP
 C_LEAVE:
 	.WORD	2+$			;Vector to code
@@ -743,7 +794,9 @@ NO_ZERO:
 	JP	NEXTS1			;Save & NEXT
 
 W_NOT:					;Convert flag, same as 0=
-	.BYTE	83h,"NO",'T'+80h
+	.BYTE	83h
+	.ascii  "NO"
+	.byte	'T'+80h
 	.WORD	W_0EQUALS
 C_NOT:
 	.WORD	X_0EQUALS
@@ -800,7 +853,9 @@ C_DPLUS:
 	JP	NEXTS2			;Save 32 bit result & NEXT
 
 W_NEGATE:				;Form 2s complement of n
-	.BYTE	86h,"NEGAT",'E'+80h
+	.BYTE	86h
+	.ascii  "NEGAT"
+	.byte	'E'+80h
 	.WORD	W_DPLUS
 C_NEGATE:
 	.WORD	2+$			;Vector to code
@@ -815,7 +870,9 @@ C_NEGATE:
 	JP	NEXTS1			;Save & NEXT
 
 W_DNEGATE:				;Form 2s complement of 32 bit n
-	.BYTE	87h,"DNEGAT",'E'+80h
+	.BYTE	87h
+	.ascii  "DNEGAT"
+	.byte	'E'+80h
 	.WORD	W_NEGATE
 C_DNEGATE:
 	.WORD	2+$			;Vector to code
@@ -836,7 +893,9 @@ C_DNEGATE:
 	JP	NEXTS2			;Save 32 bit result & NEXT
 
 W_OVER:					;Copy 2nd down to top of stack
-	.BYTE	84h,"OVE",'R'+80h
+	.BYTE	84h
+	.ascii  "OVE"
+	.byte	'R'+80h
 	.WORD	W_DNEGATE
 C_OVER:
 	.WORD	2+$			;Vector to code
@@ -846,7 +905,9 @@ C_OVER:
 	JP	NEXTS2			;Save both & NEXT
 
 W_DROP:					;Drop top value from stack
-	.BYTE	84h,"DRO",'P'+80h
+	.BYTE	84h
+	.ascii  "DRO"
+	.byte	'P'+80h
 	.WORD	W_OVER
 C_DROP:
 	.WORD	2+$			;Vector to code
@@ -854,7 +915,9 @@ C_DROP:
 	JP	NEXT
 
 W_2DROP:				;Drop top two values from stack
-	.BYTE	85h,"2DRO",'P'+80h
+	.BYTE	85h
+	.ascii  "2DRO"
+	.byte	'P'+80h
 	.WORD	W_DROP
 C_2DROP:
 	.WORD	2+$			;Vector to code
@@ -863,7 +926,9 @@ C_2DROP:
 	JP	NEXT
 
 W_SWAP:					;Swap top 2 values on stack
-	.BYTE	84h,"SWA",'P'+80h
+	.BYTE	84h
+	.ascii  "SWA"
+	.byte	'P'+80h
 	.WORD	W_2DROP
 C_SWAP:
 	.WORD	2+$			;Vector to code
@@ -872,7 +937,9 @@ C_SWAP:
 	JP	NEXTS1			;Save & NEXT
 
 W_DUP:					;Duplicate top value on stack
-	.BYTE	83h,"DU",'P'+80h
+	.BYTE	83h
+	.ascii  "DU"
+	.byte	'P'+80h
 	.WORD	W_SWAP
 C_DUP:
 	.WORD	2+$			;Vector to code
@@ -881,7 +948,9 @@ C_DUP:
 	JP	NEXTS1			;Save & NEXT
 
 W_2DUP:					;Dup top 2 values on stack
-	.BYTE	84h,"2DU",'P'+80h
+	.BYTE	84h
+	.ascii  "2DU"
+	.byte	'P'+80h
 	.WORD	W_DUP
 C_2DUP:
 	.WORD	2+$			;Vector to code
@@ -892,7 +961,9 @@ C_2DUP:
 	JP	NEXTS2			;Save both & NEXT
 
 W_BOUNDS:				;Convert address & n to start & end
-	.BYTE	86h,"BOUND",'S'+80h
+	.BYTE	86h
+	.ascii  "BOUND"
+	.byte	'S'+80h
 	.WORD	W_2DUP
 C_BOUNDS:
 	.WORD	2+$			;Vector to code
@@ -919,7 +990,9 @@ C_PLUSSTORE:
 	JP	NEXT
 
 W_TOGGLE:				;XOR (addr) with byte
-	.BYTE	86h,"TOGGL",'E'+80h
+	.BYTE	86h
+	.ascii  "TOGGL"
+	.byte	'E'+80h
 	.WORD	W_PLUSSTORE
 C_TOGGLE:
 	.WORD	2+$			;Vector to code
@@ -1052,7 +1125,9 @@ C_SEMICOLON:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_CONSTANT:
-	.BYTE	88h,"CONSTAN",'T'+80h
+	.BYTE	88h
+	.ascii  "CONSTAN"
+	.byte	'T'+80h
 	.WORD	W_SEMICOLON
 C_CONSTANT:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1071,7 +1146,9 @@ X_CONSTANT:				;Put next word on stack
 	JP	NEXT
 
 W_VARIABLE:
-	.BYTE	88h,"VARIABL",'E'+80h
+	.BYTE	88h
+	.ascii  "VARIABL"
+	.byte	'E'+80h
 	.WORD	W_CONSTANT
 C_VARIABLE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1085,7 +1162,9 @@ X_VARIABLE:
 	JP	NEXT
 
 W_USER:
-	.BYTE	84h,"USE",'R'+80h
+	.BYTE	84h
+	.ascii	"USE"
+	.byte	'R'+80h
 	.WORD	W_VARIABLE
 C_USER:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1138,7 +1217,9 @@ C_BL:
 	.WORD	0020h
 
 W_CL:
-	.BYTE	83h,"C/",'L'+80h
+	.BYTE	83h
+	.ascii  "C/"
+	.byte	'L'+80h
 	.WORD	W_BL
 C_CL:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1147,7 +1228,9 @@ C_CL:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_FIRST:
-	.BYTE	85h,"FIRS",'T'+80h
+	.BYTE	85h
+	.ascii  "FIRS"
+	.byte	'T'+80h
 	.WORD	W_CL
 C_FIRST:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1156,7 +1239,9 @@ C_FIRST:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_LIMIT:
-	.BYTE	85h,"LIMI",'T'+80h
+	.BYTE	85h
+	.ascii  "LIMI"
+	.byte	'T'+80h
 	.WORD	W_FIRST
 C_LIMIT:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1165,7 +1250,9 @@ C_LIMIT:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_BBUF:
-	.BYTE	85h,"B/BU",'F'+80h
+	.BYTE	85h
+	.ascii  "B/BU"
+	.byte	'F'+80h
 	.WORD	W_LIMIT
 C_BBUF:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1174,7 +1261,9 @@ C_BBUF:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_BSCR:
-	.BYTE	85h,"B/SC",'R'+80h
+	.BYTE	85h
+	.ascii  "B/SC"
+	.byte	'R'+80h
 	.WORD	W_BBUF
 C_BSCR:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1197,28 +1286,36 @@ C_R0:
 	.WORD	R0-SYSTEM
 
 W_TIB:
-	.BYTE	83h,"TI",'B'+80h
+	.BYTE	83h
+	.ascii  "TI"
+	.byte	'B'+80h
 	.WORD	W_R0
 C_TIB:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	TIB-SYSTEM
 
 W_WIDTH:
-	.BYTE	85h,"WIDT",'H'+80h
+	.BYTE	85h
+	.ascii  "WIDT"
+	.byte	'H'+80h
 	.WORD	W_TIB
 C_WIDTH:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	WIDTH-SYSTEM
 
 W_WARNING:				;Put WARNING addr on stack
-	.BYTE	87h,"WARNIN",'G'+80h
+	.BYTE	87h
+	.ascii  "WARNIN"
+	.byte	'G'+80h
 	.WORD	W_WIDTH
 C_WARNING:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	WARNING-SYSTEM
 
 W_FENCE:
-	.BYTE	85h,"FENC",'E'+80h
+	.BYTE	85h
+	.ascii  "FENC"
+	.byte	'E'+80h
 	  	.WORD	W_WARNING
 C_FENCE:
 	.WORD	X_USER			;Put next word on stack then do next
@@ -1232,91 +1329,117 @@ C_DP:
 	.WORD	DP-SYSTEM
 
 W_VOC_LINK:
-	.BYTE	88h,"VOC-LIN",'K'+80h
+	.BYTE	88h
+	.ascii  "VOC-LIN"
+	.byte	'K'+80h
 	.WORD	W_DP
 C_VOC_LINK:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	VOC_LINK-SYSTEM
 
 W_BLK:
-	.BYTE	83h,"BL",'K'+80h
+	.BYTE	83h
+	.ascii  "BL"
+	.byte	'K'+80h
 	.WORD	W_VOC_LINK
 C_BLK:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	BLK-SYSTEM
 
 W_TOIN:
-	.BYTE	83h,">I",'N'+80h
+	.BYTE	83h
+	.ascii  ">I"
+	.byte	'N'+80h
 	.WORD	W_BLK
 C_TOIN:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	TOIN-SYSTEM
 
 W_OUT:					;Put OUT buffer count addr on stack
-	.BYTE	83h,"OU",'T'+80h
+	.BYTE	83h
+	.ascii  "OU"
+	.byte	'T'+80h
 	.WORD	W_TOIN
 C_OUT:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	OUT-SYSTEM
 
 W_SCR:
-	.BYTE	83h,"SC",'R'+80h
+	.BYTE	83h
+	.ascii  "SC"
+	.byte	'R'+80h
 	.WORD	W_OUT
 C_SCR:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	SCR-SYSTEM
 
 W_OFFSET:				;Put disk block offset on stack
-	.BYTE	86h,"OFFSE",'T'+80h
+	.BYTE	86h
+	.ascii  "OFFSE"
+	.byte	'T'+80h
 	.WORD	W_SCR
 C_OFFSET:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	OFFSET-SYSTEM
 
 W_CONTEXT:
-	.BYTE	87h,"CONTEX",'T'+80h
+	.BYTE	87h
+	.ascii  "CONTEX"
+	.byte	'T'+80h
 	.WORD	W_OFFSET
 C_CONTEXT:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	CONTEXT-SYSTEM
 
 W_CURRENT:
-	.BYTE	87h,"CURREN",'T'+80h
+	.BYTE	87h
+	.ascii  "CURREN"
+	.byte	'T'+80h
 	.WORD	W_CONTEXT
 C_CURRENT:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	CURRENT-SYSTEM
 
 W_STATE:				;Push STATE addr
-	.BYTE	85h,"STAT",'E'+80h
+	.BYTE	85h
+	.ascii  "STAT"
+	.byte	'E'+80h
 	.WORD	W_CURRENT
 C_STATE:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	STATE-SYSTEM
 
 W_BASE:					;Put BASE addr on stack
-	.BYTE	84h,"BAS",'E'+80h
+	.BYTE	84h
+	.ascii  "BAS"
+	.byte	'E'+80h
 	.WORD	W_STATE
 C_BASE:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	BASE-SYSTEM
 
 W_DPL:
-	.BYTE	83h,"DP",'L'+80h
+	.BYTE	83h
+	.ASCII  "DP"
+	.BYTE   'L'+80h
 	.WORD	W_BASE
 C_DPL:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	DPL-SYSTEM
 
 W_FLD:
-	.BYTE	83h,"FL",'D'+80h
+	.BYTE	83h
+	.ascii  "FL"
+	.byte	'D'+80h
 	.WORD	W_DPL
 C_FLD:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	FLD-SYSTEM
 
 W_CSP:					;Push check stack pointer addr
-	.BYTE	83h,"CS",'P'+80h
+	.BYTE	83h
+	.ascii  "CS"
+	.byte	'P'+80h
 	.WORD	W_FLD
 C_CSP:
 	.WORD	X_USER			;Put next word on stack then do next
@@ -1330,154 +1453,198 @@ C_RHASH:
 	.WORD	RHASH-SYSTEM
 
 W_HLD:
-	.BYTE	83h,"HL",'D'+80h
+	.BYTE	83h
+	.ASCII  "HL"
+	.BYTE   'D'+80h
 	.WORD	W_RHASH
 C_HLD:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	HLD-SYSTEM
 
 W_UCL:
-	.BYTE	84h,"UC/",'L'+80h
+	.BYTE	84h
+	.ascii  "UC/"
+	.byte	'L'+80h
 	.WORD	W_HLD
 C_UCL:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	UCL-SYSTEM
 
 W_UFIRST:
-	.BYTE	86h,"UFIRS",'T'+80h
+	.BYTE	86h
+	.ascii  "UFIRS"
+	.byte	'T'+80h
 	.WORD	W_UCL
 C_UFIRST:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	UFIRST-SYSTEM
 
 W_ULIMIT:
-	.BYTE	86h,"ULIMI",'T'+80h
+	.BYTE	86h
+	.ascii  "ULIMI"
+	.byte	'T'+80h
 	.WORD	W_UFIRST
 C_ULIMIT:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	ULIMIT-SYSTEM
 
 W_UBBUF:
-	.BYTE	86h,"UB/BU",'F'+80h
+	.BYTE	86h
+	.ascii  "UB/BU"
+	.byte	'F'+80h
 	.WORD	W_ULIMIT
 C_UBBUF:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	UBBUF-SYSTEM
 
 W_UBSCR:
-	.BYTE	86h,"UB/SC",'R'+80h
+	.BYTE	86h
+	.ascii  "UB/SC"
+	.byte	'R'+80h
 	.WORD	W_UBBUF
 C_UBSCR:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	UBSCR-SYSTEM
 
 W_UTERMINAL:
-	.BYTE	8Ah,"U?TERMINA",'L'+80h
+	.BYTE	8Ah
+	.ascii  "U?TERMINA"
+	.byte   'L'+80h
 	.WORD	W_UBSCR
 C_UTERMINAL:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	UTERMINAL-SYSTEM
 
 W_UKEY:					;Put UKEY addr on stack
-	.BYTE	84h,"UKE",'Y'+80h
+	.BYTE	84h
+	.ascii  "UKE"
+	.byte	'Y'+80h
 	.WORD	W_UTERMINAL
 C_UKEY:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	UKEY-SYSTEM
 
 W_UEMIT:				;Put UEMIT addr on stack
-	.BYTE	85h,"UEMI",'T'+80h
+	.BYTE	85h
+	.ascii  "UEMI"
+	.byte	'T'+80h
 	.WORD	W_UKEY
 C_UEMIT:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	UEMIT-SYSTEM
 
 W_UCR:					;Push UCR addr
-	.BYTE	83h,"UC",'R'+80h
+	.BYTE	83h
+	.ascii  "UC"
+	.byte	'R'+80h
 	.WORD	W_UEMIT
 C_UCR:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	UCR-SYSTEM
 
 W_URW:
-	.BYTE	84h,"UR/",'W'+80h
+	.BYTE	84h
+	.ascii  "UR/"
+	.byte	'W'+80h
 	.WORD	W_UCR
 C_URW:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	URW-SYSTEM
 
 W_UABORT:				;Put UABORT on stack
-	.BYTE	86h,"UABOR",'T'+80h
+	.BYTE	86h
+	.ascii  "UABOR"
+	.byte	'T'+80h
 	.WORD	W_URW
 C_UABORT:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	UABORT-SYSTEM
 
 W_RAF:
-	.BYTE	83h,"RA",'F'+80h
+	.BYTE	83h
+	.ascii  "RA"
+	.byte	'F'+80h
 	.WORD	W_UABORT
 C_RAF:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	RAF-SYSTEM
 
 W_RBC:
-	.BYTE	83h,"RB",'C'+80h
+	.BYTE	83h
+	.ascii  "RB"
+	.byte	'C'+80h
 	.WORD	W_RAF
 C_RBC:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	RBC-SYSTEM
 
 W_RDE:
-	.BYTE	83h,"RD",'E'+80h
+	.BYTE	83h
+	.ascii  "RD"
+	.byte	'E'+80h
 	.WORD	W_RBC
-C_RDE
+C_RDE:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	RDE-SYSTEM
 
 W_RHL:
-	.BYTE	83h,"RH",'L'+80h
+	.BYTE	83h
+	.ascii  "RH"
+	.byte	'L'+80h
 	.WORD	W_RDE
 C_RHL:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	RHL-SYSTEM
 
 W_RIX:
-	.BYTE	83h,"RI",'X'+80h
+	.BYTE	83h
+	.ascii  "RI"
+	.byte	'X'+80h
 	.WORD	W_RHL
 C_RIX:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	RIX-SYSTEM
 
 W_RIY:
-	.BYTE	83h,"RI",'Y'+80h
+	.BYTE	83h
+	.ascii  "RI"
+	.byte	'Y'+80h
 	.WORD	W_RIX
 C_RIY:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	RIY-SYSTEM
 
 W_RAF2:
-	.BYTE	84h,"RAF",2Ch+80h
+	.BYTE	84h
+	.ascii  "RAF"
+	.byte   2Ch+80h
 	.WORD	W_RIY
 C_RAF2:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	RAF2-SYSTEM
 
 W_RBC2:
-	.BYTE	84h,"RBC",2Ch+80h
+	.BYTE	84h
+	.ascii  "RBC"
+	.byte   2Ch+80h
 	.WORD	W_RAF2
 C_RBC2:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	RBC2-SYSTEM
 
 W_RDE2:
-	.BYTE	84h,"RDE",2Ch+80h
+	.BYTE	84h
+	.ascii   "RDE"
+	.byte   2Ch+80h
 	.WORD	W_RBC2
 C_RDE2:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	RDE2-SYSTEM
 
 W_RHL2:
-	.BYTE	84h,"RHL",2Ch+80h
+	.BYTE	84h
+	.ascii  "RHL"
+	.byte   2Ch+80h
 	.WORD	W_RDE2
 C_RHL2:
 	.WORD	X_USER			;Put next word on stack then do next
@@ -1540,7 +1707,9 @@ C_RL:
 	.WORD	RHL-SYSTEM
 
 W_CALL:
-	.BYTE	84h,"CAL",'L'+80h
+	.BYTE	84h
+	.ascii  "CAL"
+	.byte	'L'+80h
 	.WORD	W_RL
 C_CALL:
 	.WORD	2+$			;Vector to code
@@ -1610,7 +1779,9 @@ C_2MINUS:
 	JP	NEXTS1			; save result & NEXT
 
 W_HERE:					;Dictionary pointer onto stack
-	.BYTE	84h,"HER",'E'+80h
+	.BYTE	84h
+	.ascii  "HER"
+	.byte	'E'+80h
 	.WORD	W_2MINUS
 C_HERE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1619,7 +1790,9 @@ C_HERE:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_ALLOT:
-	.BYTE	85h,"ALLO",'T'+80h
+	.BYTE	85h
+	.ascii  "ALLO"
+	.byte	'T'+80h
 	.WORD	W_HERE
 C_ALLOT:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1729,7 +1902,9 @@ C_GREATER:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_ROT:					;3rd valu down to top of stack
-	.BYTE	83h,"RO",'T'+80h
+	.BYTE	83h
+	.ascii  "RO"
+	.byte	'T'+80h
 	.WORD	W_GREATER
 C_ROT:
 	.WORD	2+$			;Vector to code
@@ -1739,7 +1914,9 @@ C_ROT:
 	JP	NEXTS2			;Save both & NEXT
 
 W_PICK:
-	.BYTE	84h,"PIC",'K'+80h
+	.BYTE	84h
+	.ascii  "PIC"
+	.byte	'K'+80h
 	.WORD	W_ROT
 C_PICK:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1751,7 +1928,9 @@ C_PICK:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_SPACE:
-	.BYTE	85h,"SPAC",'E'+80h
+	.BYTE	85h
+	.ascii  "SPAC"
+	.byte	'E'+80h
 	.WORD	W_PICK
 C_SPACE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1760,7 +1939,9 @@ C_SPACE:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_QUERYDUP:
-	.BYTE	84h,"?DU",'P'+80h
+	.BYTE	84h
+	.ascii  "?DU"
+	.byte	'P'+80h
 	.WORD	W_SPACE
 C_QUERYDUP:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1772,7 +1953,9 @@ B0002:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_TRAVERSE:
-	.BYTE	88h,"TRAVERS",'E'+80h
+	.BYTE	88h
+	.ascii  "TRAVERS"
+	.byte	'E'+80h
 	.WORD	W_QUERYDUP
 C_TRAVERSE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1792,7 +1975,9 @@ B0054:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_LATEST:
-	.BYTE	86h,"LATES",'T'+80h
+	.BYTE	86h
+	.ascii  "LATES"
+	.byte	'T'+80h
 	.WORD	W_TRAVERSE
 C_LATEST:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1802,7 +1987,9 @@ C_LATEST:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_LFA:
-	.BYTE	83h,"LF",'A'+80h
+	.BYTE	83h
+	.ascii  "LF"
+	.byte	'A'+80h
 	.WORD	W_LATEST
 C_LFA:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1812,7 +1999,9 @@ C_LFA:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_CFA:
-	.BYTE	83h,"CF",'A'+80h
+	.BYTE	83h
+	.ascii  "CF"
+	.byte	'A'+80h
 	.WORD	W_LFA
 C_CFA:
 	.WORD	2+$			;Vector to code
@@ -1821,7 +2010,9 @@ C_CFA:
 	DEC	HL			    ; subtract 2
 	JP	NEXTS1			; save result & NEXT
 W_NFA:
-	.BYTE	83h,"NF",'A'+80h
+	.BYTE	83h
+	.ascii  "NF"
+	.byte	'A'+80h
 	.WORD	W_CFA
 C_NFA:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1834,7 +2025,9 @@ C_NFA:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_PFA:					    ;Convert NFA to PFA
-	.BYTE	83h,"PF",'A'+80h
+	.BYTE	83h
+	.ascii  "PF"
+	.byte	'A'+80h
 	.WORD	W_NFA
 C_PFA:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1846,7 +2039,9 @@ C_PFA:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_CSPSTORE:
-	.BYTE	84h,"!CS",'P'+80h
+	.BYTE	84h
+	.ascii  "!CS"
+	.byte	'P'+80h
 	.WORD	W_PFA
 C_CSPSTORE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1856,7 +2051,9 @@ C_CSPSTORE:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_QERROR:
-	.BYTE	86h,"?ERRO",'R'+80h
+	.BYTE	86h
+	.ascii  "?ERRO"
+	.byte	'R'+80h
 	.WORD	W_CSPSTORE
 C_QERROR:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1872,7 +2069,9 @@ B0004:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_QCOMP:				;Error if not in compile mode
-	.BYTE	85h,"?COM",'P'+80h
+	.BYTE	85h
+	.ascii  "?COM"
+	.byte	'P'+80h
 	.WORD	W_QERROR
 C_QCOMP:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1885,7 +2084,9 @@ C_QCOMP:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_QEXEC:				;Error not if not in execute mode
-	.BYTE	85h,"?EXE",'C'+80h
+	.BYTE	85h
+	.ascii  "?EXE"
+	.byte	'C'+80h
 	.WORD	W_QCOMP
 C_QEXEC:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1897,7 +2098,9 @@ C_QEXEC:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_QPAIRS:
-	.BYTE	86h,"?PAIR",'S'+80h
+	.BYTE	86h
+	.ascii  "?PAIR"
+	.byte	'S'+80h
 	.WORD	W_QEXEC
 C_QPAIRS:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1908,7 +2111,9 @@ C_QPAIRS:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_WHATSTACK:				;Check stack pointer, error if not ok
-	.BYTE	84h,"?CS",'P'+80h
+	.BYTE	84h
+	.ascii  "?CS"
+	.byte	'P'+80h
 	.WORD	W_QPAIRS
 C_WHATSTACK:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1922,7 +2127,9 @@ C_WHATSTACK:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_QLOADING:
-	.BYTE	88h,"?LOADIN",'G'+80h
+	.BYTE	88h
+	.ascii  "?LOADIN"
+	.byte	'G'+80h
 	.WORD	W_WHATSTACK
 C_QLOADING:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1935,7 +2142,9 @@ C_QLOADING:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_COMPILE:
-	.BYTE	87h,"COMPIL",'E'+80h
+	.BYTE	87h
+	.ascii  "COMPIL"
+	.byte	'E'+80h
 	.WORD	W_QLOADING
 C_COMPILE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1970,7 +2179,9 @@ C_RIGHTBRKT:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_SMUDGE:
-	.BYTE	86h,"SMUDG",'E'+80h
+	.BYTE	86h
+	.ascii  "SMUDG"
+	.byte	'E'+80h
 	.WORD	W_RIGHTBRKT
 C_SMUDGE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1981,7 +2192,9 @@ C_SMUDGE:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_HEX:
-	.BYTE	83h,"HE",'X'+80h
+	.BYTE	83h
+	.ascii  "HE"
+	.byte	'X'+80h
 	.WORD	W_SMUDGE
 C_HEX:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -1992,7 +2205,9 @@ C_HEX:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_DECIMAL:				;Sets decimal mode
-	.BYTE	87h,"DECIMA",'L'+80h
+	.BYTE	87h
+	.ascii  "DECIMA"
+	.byte	'L'+80h
 	.WORD	W_HEX
 C_DECIMAL:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2003,7 +2218,9 @@ C_DECIMAL:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_CCODE:				;Stop compillation & terminate word
-	.BYTE	87h,"<;CODE",'>'+80h
+	.BYTE	87h
+	.ascii  "<;CODE"
+	.byte	'>'+80h
 	.WORD	W_DECIMAL
 C_CCODE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2015,7 +2232,9 @@ C_CCODE:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_SCCODE:
-	.BYTE	0C5h,";COD",'E'+80h
+	.BYTE	0C5h
+	.ascii  ";COD"
+	.byte   'E'+80h
 	.WORD	W_CCODE
 C_SCCODE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2027,7 +2246,9 @@ C_SCCODE:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_CREATE:
-	.BYTE	86h,"CREAT",'E'+80h
+	.BYTE	86h
+	.ascii  "CREAT"
+	.byte	'E'+80h
 	.WORD	W_SCCODE
 C_CREATE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2036,7 +2257,9 @@ C_CREATE:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_DOES:
-	.BYTE	85h,"DOES",'>'+80h
+	.BYTE	85h
+	.ascii  "DOES"
+	.byte	'>'+80h
 	.WORD	W_CREATE
 C_DOES:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2062,7 +2285,9 @@ X_DOES:
 	JP	NEXTS1			;Save & NEXT
 
 W_COUNT:				;Convert string at addr to addr + length
-	.BYTE	85h,"COUN",'T'+80h
+	.BYTE	85h
+	.ascii  "COUN"
+	.byte	'T'+80h
 	.WORD	W_DOES
 C_COUNT:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2073,7 +2298,9 @@ C_COUNT:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_TYPE:					    ;Output n bytes from addr
-	.BYTE	84h,"TYP",'E'+80h
+	.BYTE	84h
+	.ascii  "TYP"
+	.byte	'E'+80h
 	.WORD	W_COUNT
 C_TYPE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2098,7 +2325,9 @@ B0006:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_TRAILING:
-	.BYTE	89h,"-TRAILIN",'G'+80h
+	.BYTE	89h
+	.ascii  "-TRAILIN"
+	.byte	'G'+80h
 	.WORD	W_TYPE
 C_TRAILING:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2128,7 +2357,9 @@ B0008:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_CQUOTE:				;Output following string
-	.BYTE	84h,"<.",22h,'>'+80h
+	.BYTE	84h
+	.ascii  "<."
+	.byte	22h,'>'+80h
 	.WORD	W_TRAILING
 C_CQUOTE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2169,7 +2400,9 @@ B000B:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_EXPECT:
-	.BYTE	86h,"EXPEC",'T'+80h
+	.BYTE	86h
+	.ascii  "EXPEC"
+	.byte	'T'+80h
 	.WORD	W_QUOTE
 C_EXPECT:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2238,7 +2471,9 @@ B000F:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_QUERY:
-	.BYTE	85h,"QUER",'Y'+80h
+	.BYTE	85h
+	.ascii  "QUER"
+	.byte	'Y'+80h
 	.WORD	W_EXPECT
 C_QUERY:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2289,7 +2524,9 @@ B0015:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_FILL:					;Fill with byte n bytes from addr
-	.BYTE	84h,"FIL",'L'+80h
+	.BYTE	84h
+	.ascii  "FIL"
+	.byte	'L'+80h
 	.WORD	W_NULL
 C_FILL:
 	.WORD	2+$			;Vector to code
@@ -2313,7 +2550,9 @@ NO_COUNT:
 	JP	NEXT
 
 W_ERASE:				;Fill addr & length from stack with 0
-	.BYTE	85h,"ERAS",'E'+80h
+	.BYTE	85h
+	.ascii  "ERAS"
+	.byte	'E'+80h
 	.WORD	W_FILL
 C_ERASE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2322,7 +2561,9 @@ C_ERASE:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_BLANKS:				;Fill addr & length from stack with [SP]
-	.BYTE	86h,"BLANK",'S'+80h
+	.BYTE	86h
+	.ascii  "BLANK"
+	.byte	'S'+80h
 	.WORD	W_ERASE
 C_BLANKS:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2331,7 +2572,9 @@ C_BLANKS:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_HOLD:
-	.BYTE	84h,"HOL",'D'+80h
+	.BYTE	84h
+	.ascii  "HOL"
+	.byte	'D'+80h
 	.WORD	W_BLANKS
 C_HOLD:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2345,7 +2588,9 @@ C_HOLD:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_PAD:
-	.BYTE	83h,"PA",'D'+80h
+	.BYTE	83h
+	.ascii  "PA"
+	.byte	'D'+80h
 	.WORD	W_HOLD
 C_PAD:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2356,7 +2601,9 @@ C_PAD:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_WORD:
-	.BYTE	84h,"WOR",'D'+80h
+	.BYTE	84h
+	.ascii  "WOR"
+	.byte	'D'+80h
 	.WORD	W_PAD
 C_WORD:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2399,7 +2646,9 @@ B0017:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_CONVERT:
-	.BYTE	87h,"CONVER",'T'+80h
+	.BYTE	87h
+	.ascii  "CONVER"
+	.byte	'T'+80h
 	.WORD	W_WORD
 C_CONVERT:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2440,7 +2689,9 @@ B0018:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_NUMBER:
-	.BYTE	86h,"NUMBE",'R'+80h
+	.BYTE	86h
+	.ascii  "NUMBE"
+	.byte	'R'+80h
 	.WORD	W_CONVERT
 C_NUMBER:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2488,7 +2739,9 @@ B001D:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_MFIND:
-	.BYTE	85h,"-FIN",'D'+80h
+	.BYTE	85h
+	.ascii  "-FIN"
+	.byte	'D'+80h
 	.WORD	W_NUMBER
 C_MFIND:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2510,7 +2763,9 @@ B001E:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_CABORT:
-	.BYTE	87h,"<ABORT",'>'+80h
+	.BYTE	87h
+	.ascii  "<ABORT"
+	.byte	'>'+80h
 	.WORD	W_MFIND
 C_CABORT:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2518,7 +2773,9 @@ C_CABORT:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_ERROR:
-	.BYTE	85h,"ERRO",'R'+80h
+	.BYTE	85h
+	.ascii  "ERRO"
+	.byte	'R'+80h
 	.WORD	W_CABORT
 C_ERROR:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2535,7 +2792,7 @@ B001F:
 	.WORD	C_CQUOTE		;Output following string
 	.BYTE	S_END7-S_START7
 S_START7:
-	.BYTE	"? "		;
+	.ascii	"? "		;
 S_END7:
 	.WORD	C_MESSAGE		;Output message
 	.WORD	C_SPSTORE		;Set initial stack pointer value
@@ -2551,7 +2808,9 @@ B0020:
 	.WORD	C_QUIT
 
 W_ID:					;Print definition name from name field addr
-	.BYTE	83h,"ID",'.'+80h
+	.BYTE	83h
+	.ascii  "ID"
+	.byte	'.'+80h
 	.WORD	W_ERROR
 C_ID:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2605,7 +2864,9 @@ B0021:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_CCOMPILE:
-	.BYTE	89h,"[COMPILE",']'+80h
+	.BYTE	89h
+	.ascii  "[COMPILE"
+	.byte	']'+80h
 	.WORD	W_ID
 C_CCOMPILE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2619,7 +2880,9 @@ C_CCOMPILE:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_LITERAL:
-	.BYTE	0C7h,"LITERA",'L'+80h
+	.BYTE	0C7h
+	.ascii  "LITERA"
+	.byte   'L'+80h
 	.WORD	W_CCOMPILE
 C_LITERAL:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2634,7 +2897,9 @@ B0022:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_DLITERAL:
-	.BYTE	0C8h,"DLITERA",'L'+80h
+	.BYTE	0C8h
+	.ascii  "DLITERA"
+	.byte   'L'+80h
 	.WORD	W_LITERAL
 C_DLITERAL:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2649,7 +2914,9 @@ B0023:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_QSTACK:
-	.BYTE	86h,"?STAC",'K'+80h
+	.BYTE	86h
+	.ascii  "?STAC"
+	.byte	'K'+80h
 	.WORD	W_DLITERAL
 C_QSTACK:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2672,7 +2939,9 @@ C_QSTACK:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_INTERPRET:
-	.BYTE	89h,"INTERPRE",'T'+80h
+	.BYTE	89h
+	.ascii  "INTERPRE"
+	.byte	'T'+80h
 	.WORD	W_QSTACK
 C_INTERPRET:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2717,7 +2986,9 @@ B0027:
 	.WORD	B002A-$			;FFC2h
 
 W_IMMEDIATE:
-	.BYTE	89h,"IMMEDIAT",'E'+80h
+	.BYTE	89h
+	.ascii  "IMMEDIAT"
+	.byte	'E'+80h
 	.WORD	W_INTERPRET
 C_IMMEDIATE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2728,7 +2999,9 @@ C_IMMEDIATE:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_VOCABULARY:
-	.BYTE	8Ah,"VOCABULAR",'Y'+80h
+	.BYTE	8Ah
+	.ascii  "VOCABULAR"
+	.byte   'Y'+80h
 	.WORD	W_IMMEDIATE
 C_VOCABULARY:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2760,19 +3033,23 @@ C_LINK:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_FORTH:
-	.BYTE	0C5h,"FORT",'H'+80h
+	.BYTE	0C5h
+	.ascii  "FORT"
+	.byte   'H'+80h
 	.WORD	W_VOCABULARY
 C_FORTH:
 	.WORD	X_DOES
 	.WORD	C_LINK
 
-	.BYTE	81h," "+80h
+	.BYTE	81h,' '+80h		; XXX $20 or $A0 ?
 	.WORD	FLAST+2
 E_FORTH:
 	.WORD	0000h
 
 W_DEFINITIONS:				;Set CURRENT as CONTEXT vocabulary
-	.BYTE	8Bh,"DEFINITION",'S'+80h
+	.BYTE	8Bh
+	.ascii  "DEFINITION"
+	.byte   'S'+80h
 	.WORD	W_FORTH
 C_DEFINITIONS:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2797,7 +3074,9 @@ C_OPENBRKT:
 ;		outer loop. This NEVER quits.
 
 W_QUIT:
-	.BYTE	84h,"QUI",'T'+80h
+	.BYTE	84h
+	.ascii  "QUI"
+	.byte	'T'+80h
 	.WORD	W_OPENBRKT
 C_QUIT:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2818,13 +3097,15 @@ B002C:
 	.WORD	C_CQUOTE		;Output following string
 	.BYTE	S_END8-S_START8
 S_START8:
-	.BYTE	"OK"
+	.ascii	"OK"
 S_END8:
 	.WORD	C_BRANCH		;Add following offset to BC
 	.WORD	B002C-$			;FFE7h
 
 W_ABORT:
-	.BYTE	85h,"ABOR",'T'+80h
+	.BYTE	85h
+	.ascii  "ABOR"
+	.byte	'T'+80h
 	.WORD	W_QUIT
 C_ABORT:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2842,14 +3123,16 @@ CF_UABORT:
 	.WORD	C_CQUOTE		;Output following string
 	.BYTE	S_END1-S_START1		;String length
 S_START1:
-	.BYTE	"* Z80 FORTH *"
+	.ascii	"* Z80 FORTH *"
 S_END1:
 	.WORD	C_FORTH
 	.WORD	C_DEFINITIONS		;Set CURRENT as CONTEXT vocabulary
 	.WORD	C_QUIT
 
 W_WARM:
-	.BYTE	84h,"WAR",'M'+80h
+	.BYTE	84h
+	.ascii  "WAR"
+	.byte	'M'+80h
 	.WORD	W_ABORT
 C_WARM:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2881,7 +3164,9 @@ FIRSTWORD:
 	.WORD	C_COLD
 
 W_COLD:
-	.BYTE	84h,"COL",'D'+80h
+	.BYTE	84h
+	.ascii  "COL"
+	.byte	'D'+80h
 	.WORD	W_WARM
 	.WORD	X_COLD
 C_COLD:
@@ -2900,7 +3185,9 @@ C_COLD:
 	.WORD	C_ABORT
 
 W_SINGTODUB:				;Change single number to double
-	.BYTE	84h,"S->",'D'+80h
+	.BYTE	84h
+	.ascii  "S->"
+	.byte	'D'+80h
 	.WORD	W_COLD
 C_SINGTODUB:
 	.WORD	2+$			;Vector to code
@@ -2926,7 +3213,9 @@ B002D:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_DPLUSMINUS:				;Add sign of n to double
-	.BYTE	83h,"D+",'-'+80h
+	.BYTE	83h
+	.ascii  "D+"
+	.byte	'-'+80h
 	.WORD	W_PLUSMINUS
 C_DPLUSMINUS:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2938,7 +3227,9 @@ B002E:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_ABS:
-	.BYTE	83h,"AB",'S'+80h
+	.BYTE	83h
+	.ascii  "AB"
+	.byte	'S'+80h
 	.WORD	W_DPLUSMINUS
 C_ABS:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2947,7 +3238,9 @@ C_ABS:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_DABS:
-	.BYTE	84h,"DAB",'S'+80h
+	.BYTE	84h
+	.ascii  "DAB"
+	.byte	'S'+80h
 	.WORD	W_ABS
 C_DABS:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2956,7 +3249,9 @@ C_DABS:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_MIN:
-	.BYTE	83h,"MI",'N'+80h
+	.BYTE	83h
+	.ascii  "MI"
+	.byte	'N'+80h
 	.WORD	W_DABS
 C_MIN:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -2970,7 +3265,9 @@ B002F:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_MAX:
-	.BYTE	83h,"MA",'X'+80h
+	.BYTE	83h
+	.ascii  "MA"
+	.byte	'X'+80h
 	.WORD	W_MIN
 C_MAX:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3031,7 +3328,9 @@ C_TIMES:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_DIVMOD:
-	.BYTE	84h,"/MO",'D'+80h
+	.BYTE	84h
+	.ascii  "/MO"
+	.byte	'D'+80h
 	.WORD	W_TIMES
 C_DIVMOD:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3052,7 +3351,9 @@ C_DIV:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_MOD:
-	.BYTE	83h,"MO",'D'+80h
+	.BYTE	83h
+	.ascii  "MO"
+	.byte	'D'+80h
 	.WORD	W_DIV
 C_MOD:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3061,7 +3362,9 @@ C_MOD:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_TIMESDIVMOD:
-	.BYTE	85h,"*/MO",'D'+80h
+	.BYTE	85h
+	.ascii  "*/MO"
+	.byte	'D'+80h
 	.WORD	W_MOD
 C_TIMESDIVMOD:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3082,7 +3385,9 @@ C_TIMESDIV:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_MDIVMOD:
-	.BYTE	85h,"M/MO",'D'+80h
+	.BYTE	85h
+	.ascii  "M/MO"
+	.byte	'D'+80h
 	.WORD	W_TIMESDIV
 C_MDIVMOD:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3098,7 +3403,9 @@ C_MDIVMOD:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_CLINE:
-	.BYTE	86h,"<LINE",'>'+80h
+	.BYTE	86h
+	.ascii  "<LINE"
+	.byte	'>'+80h
 	.WORD	W_MDIVMOD
 C_CLINE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3116,7 +3423,9 @@ C_CLINE:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_DOTLINE:
-	.BYTE	85h,".LIN",'E'+80h
+	.BYTE	85h
+	.ascii  ".LIN"
+	.byte	'E'+80h
 	.WORD	W_CLINE
 C_DOTLINE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3126,7 +3435,9 @@ C_DOTLINE:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_MESSAGE:
-	.BYTE	87h,"MESSAG",'E'+80h
+	.BYTE	87h
+	.ascii  "MESSAG"
+	.byte	'E'+80h
 	.WORD	W_DOTLINE
 C_MESSAGE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3153,7 +3464,7 @@ B0031:
 	.WORD	C_CQUOTE		;Output following string
 		.BYTE	S_END2-S_START2
 S_START2:
-	.BYTE	"MSG # "
+	.ascii	"MSG # "
 S_END2:
 	.WORD	C_DOT
 B0033:
@@ -3186,33 +3497,43 @@ C_PORTOUT:
 	JP	NEXT
 
 W_USE:
-	.BYTE	83h,"US",'E'+80h
+	.BYTE	83h
+	.ascii  "US"
+	.byte	'E'+80h
 	.WORD	W_PORTOUT
 C_USE:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	USE-SYSTEM
 
 W_PREV:
-	.BYTE	84h,"PRE",'V'+80h
+	.BYTE	84h
+	.ascii  "PRE"
+	.byte	'V'+80h
 	.WORD	W_USE
 C_PREV:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	PREV-SYSTEM
 
 W_PLUSBUF:
-	.BYTE	84h,"+BU",'F'+80h
+	.BYTE	84h
+	.ascii  "+BU"
+	.byte	'F'+80h
 	.WORD	W_PREV
 C_PLUSBUF:
 	.WORD	NEXT
 
 W_UPDATE:
-	.BYTE	86h,"UPDAT",'E'+80h
+	.BYTE	86h
+	.ascii  "UPDAT"
+	.byte	'E'+80h
 	.WORD	W_PLUSBUF
 C_UPDATE:
 	.WORD	NEXT
 
 W_EBUFFERS:				;Clear pseudo disk buffer
-	.BYTE	8Dh,"EMPTY-BUFFER",'S'+80h
+	.BYTE	8Dh
+	.ascii  "EMPTY-BUFFER"
+	.byte   'S'+80h
 	.WORD	W_UPDATE
 C_EBUFFERS:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3224,7 +3545,9 @@ C_EBUFFERS:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_BUFFER:
-	.BYTE	86h,"BUFFE",'R'+80h
+	.BYTE	86h
+	.ascii  "BUFFE"
+	.byte	'R'+80h
 	.WORD	W_EBUFFERS
 C_BUFFER:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3232,13 +3555,14 @@ C_BUFFER:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_BLOCK:				;Put address of block n (+ offset) on stack
-	.BYTE	85h,"BLOC",'K'+80h
+	.BYTE	85h
+	.ascii  "BLOC"
+	.byte	'K'+80h
 	.WORD	W_BUFFER
 C_BLOCK:
 	.WORD	E_COLON			;Interpret following word sequence
 	.WORD	C_LIT			;Puts next 2 bytes on the stack
-	.WORD	DISK_END/BLOCK_SIZE-DISK_START/BLOCK_SIZE
-					;Max number of blocks
+	.WORD	MAX_DISK_BLOCKS ;Max number of blocks
 	.WORD	C_MOD			;MOD to max number
 	.WORD	C_OFFSET		;Put address of disk block offset on stack
 	.WORD	C_FETCH			;Get disk block offset
@@ -3250,7 +3574,9 @@ C_BLOCK:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_RW:
-	.BYTE	83h,"R/",'W'+80h
+	.BYTE	83h
+	.ascii  "R/"
+	.byte	'W'+80h
 	.WORD	W_BLOCK
 C_RW:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3266,14 +3592,18 @@ CF_URW:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_FLUSH:
-	.BYTE	85h,"FLUS",'H'+80h
+	.BYTE	85h
+	.ascii  "FLUS"
+	.byte	'H'+80h
 	.WORD	W_RW
 C_FLUSH:
 	.WORD	E_COLON			;Interpret following word sequence
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_DUMP:
-	.BYTE	84h,"DUM",'P'+80h
+	.BYTE	84h
+	.ascii  "DUM"
+	.byte	'P'+80h
 	.WORD	W_FLUSH
 C_DUMP:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3309,7 +3639,9 @@ B0050:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_LOAD:
-	.BYTE	84h,"LOA",'D'+80h
+	.BYTE	84h
+	.ascii  "LOA"
+	.byte	'D'+80h
 	.WORD	W_DUMP
 C_LOAD:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3336,7 +3668,9 @@ C_LOAD:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_NEXTSCREEN:
-	.BYTE	0C3h,"--",'>'+80h
+	.BYTE	0C3h
+	.ascii  "--"
+	.byte   '>'+80h
 	.WORD	W_LOAD
 C_NEXTSCREEN:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3368,7 +3702,9 @@ C_TICK:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_FORGET:
-	.BYTE	86h,"FORGE",'T'+80h
+	.BYTE	86h
+	.ascii  "FORGE"
+	.byte	'T'+80h
 	.WORD	W_TICK
 C_FORGET:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3400,7 +3736,9 @@ C_FORGET:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_BACK:
-	.BYTE	84h,"BAC",'K'+80h
+	.BYTE	84h
+	.ascii  "BAC"
+	.byte	'K'+80h
 	.WORD	W_FORGET
 C_BACK:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3410,7 +3748,9 @@ C_BACK:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_BEGIN:
-	.BYTE	0C5h,"BEGI",'N'+80h
+	.BYTE	0C5h
+	.ascii  "BEGI"
+	.byte   'N'+80h
 	.WORD	W_BACK
 C_BEGIN:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3420,7 +3760,9 @@ C_BEGIN:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_ENDIF:
-	.BYTE	0C5h,"ENDI",'F'+80h
+	.BYTE	0C5h
+	.ascii  "ENDI"
+	.byte   'F'+80h
 	.WORD	W_BEGIN
 C_ENDIF:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3435,7 +3777,9 @@ C_ENDIF:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_THEN:
-	.BYTE	0C4h,"THE",'N'+80h
+	.BYTE	0C4h
+	.ascii  "THE"
+	.byte   'N'+80h
 	.WORD	W_ENDIF
 C_THEN:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3454,7 +3798,9 @@ C_DO:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_LOOP:
-	.BYTE	0C4h,"LOO",'P'+80h
+	.BYTE	0C4h
+	.ascii  "LOO"
+	.byte   'P'+80h
 	.WORD	W_DO
 C_LOOP:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3466,7 +3812,9 @@ C_LOOP:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_PLUSLOOP:
-	.BYTE	0C5h,"+LOO",'P'+80h
+	.BYTE	0C5h
+	.ascii  "+LOO"
+	.byte   'P'+80h
 	.WORD	W_LOOP
 C_PLUSLOOP:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3478,7 +3826,9 @@ C_PLUSLOOP:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_UNTIL:
-	.BYTE	0C5h,"UNTI",'L'+80h
+	.BYTE	0C5h
+	.ascii  "UNTI"
+	.byte   'L'+80h
 	.WORD	W_PLUSLOOP
 C_UNTIL:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3490,7 +3840,9 @@ C_UNTIL:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_END:
-	.BYTE	0C3h,"EN",'D'+80h
+	.BYTE	0C3h
+	.ascii  "EN"
+	.byte   'D'+80h
 	.WORD	W_UNTIL
 C_END:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3498,7 +3850,9 @@ C_END:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_AGAIN:
-	.BYTE	0C5h,"AGAI",'N'+80h
+	.BYTE	0C5h
+	.ascii  "AGAI"
+	.byte   'N'+80h
 	.WORD	W_END
 C_AGAIN:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3510,7 +3864,9 @@ C_AGAIN:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_REPEAT:
-	.BYTE	0C6h,"REPEA",'T'+80h
+	.BYTE	0C6h
+	.ascii  "REPEA"
+	.byte   'T'+80h
 	.WORD	W_AGAIN
 C_REPEAT:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3538,7 +3894,9 @@ C_IF:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_ELSE:
-	.BYTE	0C4h,"ELS",'E'+80h
+	.BYTE	0C4h
+	.ascii  "ELS"
+	.byte   'E'+80h
 	.WORD	W_IF
 C_ELSE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3556,7 +3914,9 @@ C_ELSE:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_WHILE:
-	.BYTE	0C5h,"WHIL",'E'+80h
+	.BYTE	0C5h
+	.ascii  "WHIL"
+	.byte   'E'+80h
 	.WORD	W_ELSE
 C_WHILE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3565,7 +3925,9 @@ C_WHILE:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_SPACES:
-	.BYTE	86h,"SPACE",'S'+80h
+	.BYTE	86h
+	.ascii  "SPACE"
+	.byte	'S'+80h
 	.WORD	W_WHILE
 C_SPACES:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3608,7 +3970,9 @@ C_SHARPGT:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_SIGN:
-	.BYTE	84h,"SIG",'N'+80h
+	.BYTE	84h
+	.ascii  "SIG"
+	.byte	'N'+80h
 	.WORD	W_SHARPGT
 C_SIGN:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3663,7 +4027,9 @@ B0038:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_DDOTR:
-	.BYTE	83h,"D.",'R'+80h
+	.BYTE	83h
+	.ascii  "D."
+	.byte	'R'+80h
 	.WORD	W_SHARPS
 C_DDOTR:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3731,7 +4097,9 @@ C_UDOT:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_VLIST:
-	.BYTE	85h,"VLIS",'T'+80h
+	.BYTE	85h
+	.ascii  "VLIS"
+	.byte	'T'+80h
 	.WORD	W_UDOT
 C_VLIST:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3757,7 +4125,9 @@ B0039:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_LIST:
-	.BYTE	84h,"LIS",'T'+80h
+	.BYTE	84h
+	.ascii  "LIS"
+	.byte	'T'+80h
 	.WORD	W_VLIST
 C_LIST:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3772,7 +4142,7 @@ C_LIST:
 	.WORD	C_CQUOTE		;Output following string
 	.BYTE	S_END3-S_START3
 S_START3:
-	.BYTE	"SCR # "
+	.ascii	"SCR # "
 S_END3:
 	.WORD	C_DOT			;Output the screen number
 	.WORD	C_LIT			;Puts next 2 bytes on the stack
@@ -3803,7 +4173,9 @@ NO_BRK:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_INDEX:
-	.BYTE	85h,"INDE",'X'+80h
+	.BYTE	85h
+	.ascii  "INDE"
+	.byte	'X'+80h
 	.WORD	W_LIST
 C_INDEX:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3831,7 +4203,9 @@ B003C:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_INT:
-	.BYTE	0C4h,";IN",'T'+80h
+	.BYTE	0C4h
+	.ascii  ";IN"
+	.byte   'T'+80h
 	.WORD	W_INDEX
 C_INT:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3850,33 +4224,41 @@ X_INT:
 	JP	X_STOP
 
 W_INTFLAG:
-	.BYTE	87h,"INTFLA",'G'+80h
+	.BYTE	87h
+	.ascii  "INTFLA"
+	.byte	'G'+80h
 	.WORD	W_INT
 C_INTFLAG:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	INTFLAG-SYSTEM
 
 W_INTVECT:
-	.BYTE	87h,"INTVEC",'T'+80h
+	.BYTE	87h
+	.ascii  "INTVEC"
+	.byte	'T'+80h
 	.WORD	W_INTFLAG
 C_INTVECT:
 	.WORD	X_USER			;Put next word on stack then do next
 	.WORD	INTVECT-SYSTEM
 
 W_CPU:
-	.BYTE	84h,".CP",'U'+80h
+	.BYTE	84h
+	.ascii  ".CP"
+	.byte	'U'+80h
 	.WORD	W_INTVECT
 C_CPU:
 	.WORD	E_COLON			;Interpret following word sequence
 	.WORD	C_CQUOTE		;Output following string
 	.BYTE	S_END4-S_START4
 S_START4:
-	.BYTE	"Z80 "
+	.ascii	"Z80 "
 S_END4:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_2SWAP:
-	.BYTE	85h,"2SWA",'P'+80h
+	.BYTE	85h
+	.ascii  "2SWA"
+	.byte	'P'+80h
 	.WORD	W_CPU
 C_2SWAP:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3887,7 +4269,9 @@ C_2SWAP:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_2OVER:
-	.BYTE	85h,"2OVE",'R'+80h
+	.BYTE	85h
+	.ascii  "2OVE"
+	.byte	'R'+80h
 	.WORD	W_2SWAP
 C_2OVER:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3900,7 +4284,9 @@ C_2OVER:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_EXIT:
-	.BYTE	84h,"EXI",'T'+80h
+	.BYTE	84h
+	.ascii  "EXI"
+	.byte	'T'+80h
 	.WORD	W_2OVER
 C_EXIT:
 	.WORD	X_STOP
@@ -3918,7 +4304,9 @@ C_J:
 	JP	X_I2
 
 W_ROLL:
-	.BYTE	84h,"ROL",'L'+80h
+	.BYTE	84h
+	.ascii  "ROL"
+	.byte	'L'+80h
 	.WORD	W_J
 C_ROLL:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -3954,7 +4342,9 @@ B003E:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_DEPTH:
-	.BYTE	85h,"DEPT",'H'+80h
+	.BYTE	85h
+	.ascii  "DEPT"
+	.byte	'H'+80h
 	.WORD	W_ROLL
 C_DEPTH:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -4000,7 +4390,7 @@ C_0GREATER:
 W_DOTS:
 	.BYTE	82h,'.','S'+80h
 	.WORD	W_0GREATER
-C_DOTS
+C_DOTS:
 	.WORD	E_COLON			;Interpret following word sequence
 	.WORD	C_CR			;Output [CR][LF]
 	.WORD	C_DEPTH
@@ -4026,12 +4416,14 @@ B0042:
 	.WORD	C_CQUOTE		;Output following string
 	.BYTE	S_END5-S_START5
 S_START5:
-	.BYTE	"STACK EMPTY "
+	.ascii	"STACK EMPTY "
 S_END5:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_CODE:
-	.BYTE	84h,"COD",'E'+80h
+	.BYTE	84h
+	.ascii  "COD"
+	.byte	'E'+80h
 	.WORD	W_DOTS
 C_CODE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -4041,7 +4433,9 @@ C_CODE:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_ENDCODE:
-	.BYTE	88h,"END-COD",'E'+80h
+	.BYTE	88h
+	.ascii  "END-COD"
+	.byte	'E'+80h
 	.WORD	W_CODE
 C_ENDCODE:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -4055,7 +4449,9 @@ C_ENDCODE:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_NEXT:
-	.BYTE	0C4h,"NEX",'T'+80h
+	.BYTE	0C4h
+	.ascii  "NEX"
+	.byte   'T'+80h
 	.WORD	W_ENDCODE
 C_NEXT:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -4068,7 +4464,9 @@ C_NEXT:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_LLOAD:
-	.BYTE	85h,"LLOA",'D'+80h
+	.BYTE	85h
+	.ascii  "LLOA"
+	.byte	'D'+80h
 ;	.WORD	W_MON
 	.WORD	W_NEXT
 C_LLOAD:
@@ -4116,7 +4514,9 @@ LL_CHAR:
 	.WORD	C_STOP			;Pop BC from return stack (=next)
 
 W_TASK:
-	.BYTE	84h,"TAS",'K'+80h
+	.BYTE	84h
+	.ascii  "TAS"
+	.byte	'K'+80h
 	.WORD	W_LLOAD
 C_TASK:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -4126,7 +4526,9 @@ W_TASKEND:
 W_EDITI:
 
 W_CLEAR:				;Clear block n
-	.BYTE	85h,"CLEA",'R'+80h
+	.BYTE	85h
+	.ascii  "CLEA"
+	.byte	'R'+80h
 	.WORD	W_TASK
 C_CLEAR:
 	.WORD	E_COLON			;Interpret following word sequence
@@ -4209,76 +4611,76 @@ CHR_WR:					;Character out
         RST 08h
 	RET				;
 
+.section .bss
 ;==============================================================================
-		.ORG	0FE00h	        ;Set up system variable addresses
+;		.ORG	0FE00h	        ;Set up system variable addresses
 ;==============================================================================
 SYSTEM:					;Start of scratch pad area
-		.BLOCK	6		;User bytes
-S0:		.BLOCK	2		;Initial value of the data stack pointer
-R0:		.BLOCK	2		;Initial value of the return stack pointer
-TIB:		.BLOCK	2		;Address of the terminal input buffer
-WIDTH:		.BLOCK	2		;Number of letters saved in names
-WARNING:	.BLOCK	2		;Error message control number
-FENCE:		.BLOCK	2		;Dictionary FORGET protection point
-DP:		.BLOCK	2		;The dictionary pointer
-VOC_LINK:	.BLOCK	2		;Most recently created vocabulary
-BLK:		.BLOCK	2		;Current block number under interpretation
-TOIN:		.BLOCK	2		;Offset in the current input text buffer
-OUT:		.BLOCK	2		;Offset in the current output text buffer
-SCR:		.BLOCK	2		;Screen number last referenced by LIST
-OFFSET:		.BLOCK	2		;Block offset for disk drives
-CONTEXT:	.BLOCK	2		;Pointer to the vocabulary within which
+		.space	6		;User bytes
+S0:		.space	2		;Initial value of the data stack pointer
+R0:		.space	2		;Initial value of the return stack pointer
+TIB:		.space	2		;Address of the terminal input buffer
+WIDTH:		.space	2		;Number of letters saved in names
+WARNING:	.space	2		;Error message control number
+FENCE:		.space	2		;Dictionary FORGET protection point
+DP:		.space	2		;The dictionary pointer
+VOC_LINK:	.space	2		;Most recently created vocabulary
+BLK:		.space	2		;Current block number under interpretation
+TOIN:		.space	2		;Offset in the current input text buffer
+OUT:		.space	2		;Offset in the current output text buffer
+SCR:		.space	2		;Screen number last referenced by LIST
+OFFSET:		.space	2		;Block offset for disk drives
+CONTEXT:	.space	2		;Pointer to the vocabulary within which
 					;dictionary search will first begin
-CURRENT:	.BLOCK	2		;Pointer to the vocabulary within which
+CURRENT:	.space	2		;Pointer to the vocabulary within which
 					;new definitions are to be created
-STATE:		.BLOCK	2		;Contains state of compillation
-BASE:		.BLOCK	2		;Current I/O base address
-DPL:		.BLOCK	2		;Number of digits to the right of the
+STATE:		.space	2		;Contains state of compillation
+BASE:		.space	2		;Current I/O base address
+DPL:		.space	2		;Number of digits to the right of the
 					;decimal point on double integer input
-FLD:		.BLOCK	2		;Field width for formatted number output
-CSP:		.BLOCK	2		;Check stack pointer
-RHASH:		.BLOCK	2		;Location of editor cursor in a text bloxk
-HLD:		.BLOCK	2		;Address of current output
-FLAST:		.BLOCK	6		;FORTH vocabulary data initialised to FORTH
+FLD:		.space	2		;Field width for formatted number output
+CSP:		.space	2		;Check stack pointer
+RHASH:		.space	2		;Location of editor cursor in a text bloxk
+HLD:		.space	2		;Address of current output
+FLAST:		.space	6		;FORTH vocabulary data initialised to FORTH
 					;vocabulary
-ELAST:		.BLOCK	6		;Editor vocabulary data initialised to
+ELAST:		.space	6		;Editor vocabulary data initialised to
 					;EDITOR vocabulary
-CRFLAG:		.BLOCK	1		;Carriage return flag
-		.BLOCK	1		;User byte
-PAT:		.BLOCK	3		;I/O port fetch routine (input)
-PST:		.BLOCK	3		;I/O port store routine (output)
-RPP:		.BLOCK	2		;Return stack pointer
-USE:		.BLOCK	2		;Mass storage buffer address to use
-PREV:		.BLOCK	2		;Mass storage buffer address just used
-INTFLAG:	.BLOCK	1		;Interrupt flag
-		.BLOCK	1		;User byte
-INTVECT:	.BLOCK	2		;Interrupt vector
-UTERMINAL:	.BLOCK	2		;Code field address of word ?TERMINAL
-UKEY:		.BLOCK	2		;Code field address of word KEY
-UEMIT:		.BLOCK	2		;Code field address of word EMIT
-UCR:		.BLOCK	2		;Code field address of word CR
-URW:		.BLOCK	2		;Code field address of word R/W
-UABORT:		.BLOCK	2		;Code field address of word ABORT
-UCL:		.BLOCK	2		;Number of characters per input line
-UFIRST:		.BLOCK	2		;Start of pseudo disk buffer
-ULIMIT:		.BLOCK	2		;End of pseudo disk buffer
-UBBUF:		.BLOCK	2		;Number of bytes per block
-UBSCR:		.BLOCK	2		;Number of buffers per block
-KEYBUF:		.BLOCK	2		;Double key buffer
-RAF:		.BLOCK	2		;Register AF
-RBC:		.BLOCK	2		;Register BC
-RDE:		.BLOCK	2		;Register DE
-RHL:		.BLOCK	2		;Register HL
-RIX:		.BLOCK	2		;Register IX
-RIY:		.BLOCK	2		;Register IY
-RAF2:		.BLOCK	2		;Register AF'
-RBC2:		.BLOCK	2		;Register BC'
-RDE2:		.BLOCK	2		;Register DE'
-RHL2:		.BLOCK	2		;Register HL'
-		.BLOCK	1		;User byte
-JPCODE:		.BLOCK	1		;JMP code (C3) for word CALL
-JPVECT:		.BLOCK	2		;JMP vector for word CALL
-		.BLOCK	32		;User bytes
+CRFLAG:		.space	1		;Carriage return flag
+		.space	1		;User byte
+PAT:		.space	3		;I/O port fetch routine (input)
+PST:		.space	3		;I/O port store routine (output)
+RPP:		.space	2		;Return stack pointer
+USE:		.space	2		;Mass storage buffer address to use
+PREV:		.space	2		;Mass storage buffer address just used
+INTFLAG:	.space	1		;Interrupt flag
+		.space	1		;User byte
+INTVECT:	.space	2		;Interrupt vector
+UTERMINAL:	.space	2		;Code field address of word ?TERMINAL
+UKEY:		.space	2		;Code field address of word KEY
+UEMIT:		.space	2		;Code field address of word EMIT
+UCR:		.space	2		;Code field address of word CR
+URW:		.space	2		;Code field address of word R/W
+UABORT:		.space	2		;Code field address of word ABORT
+UCL:		.space	2		;Number of characters per input line
+UFIRST:		.space	2		;Start of pseudo disk buffer
+ULIMIT:		.space	2		;End of pseudo disk buffer
+UBBUF:		.space	2		;Number of bytes per block
+UBSCR:		.space	2		;Number of buffers per block
+KEYBUF:		.space	2		;Double key buffer
+RAF:		.space	2		;Register AF
+RBC:		.space	2		;Register BC
+RDE:		.space	2		;Register DE
+RHL:		.space	2		;Register HL
+RIX:		.space	2		;Register IX
+RIY:		.space	2		;Register IY
+RAF2:		.space	2		;Register AF'
+RBC2:		.space	2		;Register BC'
+RDE2:		.space	2		;Register DE'
+RHL2:		.space	2		;Register HL'
+		.space	1		;User byte
+JPCODE:		.space	1		;JMP code (C3) for word CALL
+JPVECT:		.space	2		;JMP vector for word CALL
+		.space	32		;User bytes
 
-		.END
 ;==============================================================================
