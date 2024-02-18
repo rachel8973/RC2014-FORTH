@@ -23,3 +23,4 @@ jobs:
       with:
         files: |
           rom.bin
+          ram.hex

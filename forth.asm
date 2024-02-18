@@ -3041,7 +3041,7 @@ C_FORTH:
 	.WORD	X_DOES
 	.WORD	C_LINK
 
-	.BYTE	81h,' '+80h		; XXX $20 or $A0 ?
+	.BYTE	81h,' ';+80h		; XXX $20 or $A0 ?
 	.WORD	FLAST+2
 E_FORTH:
 	.WORD	0000h
@@ -4589,27 +4589,15 @@ CF_UQTERMINAL:				;Test for user break
 CHR_RD:					;Character in
 	RST 10h
 	RET
-NO_BUF_KEY:
-	RET				;
 
 BREAKKEY:
-; 	IN A,($80)
-; 	AND $01           		;Check if interupt due to read buffer full
-; 	JR Z,NO_KEY        		;if not, ignore
-; 	IN A,($81)
-; 	CP 27h				;Is it break
-; 	JR Z,WAS_BRK
-NO_KEY:
  	XOR	A			;Wasn't break, or no key, so clear
 	RET
-;WAS_BRK:
-; 	LD	A,01h			;Was break so set flag
-; 	RET
 
 CHR_WR:					;Character out
-        AND 7Fh                         ;To knock off end of word marker
-        RST 08h
-	RET				;
+    AND 7Fh         ;To knock off end of word marker
+    RST 08h
+	RET
 
 .section .bss
 ;==============================================================================

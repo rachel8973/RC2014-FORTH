@@ -70,6 +70,11 @@ I changed it a bit, but even before I was getting different value:
 I think 40 blocks is the correct value (instead of some negative number...).
 The only explanation I can think of is that TASM doesn't have arithmetic operations precedence.
 
+## RAM image
+
+RAM image has base address `0x8000` and can be loaded by SCM for RC2014.
+In this version `SYSTEM` table is moved to `0xFA00` not to collide with RAM memory reserved by SCM.
+
 Original files are in the [original](original) directory.
 Original README follws.
 

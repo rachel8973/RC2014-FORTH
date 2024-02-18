@@ -2,7 +2,6 @@ INCLUDE memory.ld
 
 SECTIONS
 {
-    . = 0x0000; /* Start address of the .text section */
     .rom : {
         *(.bios)
         . = ABSOLUTE(0x0150);
