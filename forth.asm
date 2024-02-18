@@ -3041,7 +3041,7 @@ C_FORTH:
 	.WORD	X_DOES
 	.WORD	C_LINK
 
-	.BYTE	81h,' ';+80h		; XXX $20 or $A0 ?
+	.BYTE	81h,' '+80h		; XXX $20 or $A0 ?
 	.WORD	FLAST+2
 E_FORTH:
 	.WORD	0000h

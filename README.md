@@ -5,7 +5,7 @@ I forked original project and corrected one obvious mistake (`,` instead of `'`)
 Than I realised I can't compile it, because digging out TASM and trying to run it in a virtual machine is just too much for me.
 So I ported this to GNU AS.
 
-Surprisinly, I found two differences that are not easy to explain.
+Surprisingly, I found two differences that are not obvious.
 
 ```
 --- /dev/fd/63  2024-02-18 16:04:46.994421948 +0000
