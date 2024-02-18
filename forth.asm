@@ -16,10 +16,6 @@
 ;
 ;------------------------------------------------------------------------------
 
-;#IFDEF ROM
-;#INCLUDE        "INT32K.ASM"
-;#ENDIF         ; ROM
-
 ;------------------------------------------------------------------------------
 ; This is an implementation of FORTH for the Z80 that should be easily portable
 ; to other Z80 systems. It assumes RAM from 9000h to 0FFFFh and a UART for
@@ -35,25 +31,14 @@ BUFFERS:	.EQU	0001h		;Pseudo disk buffers per block
 
 MAX_DISK_BLOCKS = (DISK_END-DISK_START)/BLOCK_SIZE
 
-;#IFDEF ROM
-;  No Monitor
-;		.ORG	150h		;Start of ROM after BIOS
-;#ELSE
-;MONSTART:	.EQU	0153h		;Monitor entry address
-;		.ORG	8200h		;Start of RAM allowing for Monitor ROM
-;#ENDIF
-
 ; Start of FORTH code
 
 .section .cold
 
 	JP	X_COLD
 
-;#IFDEF ROM
-;  No Monitor
-;	.ORG	153h			;  WARM Start Point
-;#ENDIF
 .section .warm
+
 	JP	C_WARM
 
 BACKSPACE:
